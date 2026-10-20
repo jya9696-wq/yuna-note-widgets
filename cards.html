@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>YUNA 카드</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@1,800;1,900&family=Noto+Sans+KR:wght@500;700;900&display=swap" rel="stylesheet">
+<style>
+  /*
+    사용법 (노션 임베드 주소):
+    cards.html?n=10/17&nu=노트페이지ID&c=10/17&cu=수업정리페이지ID
+      n  : 최근 노트 날짜 표시 (예: 10/17)
+      nu : 최근 노트 노션 페이지 ID (32자리)
+      c  : 오늘의 수업 내용 날짜 표시
+      cu : 수업 정리 노션 페이지 ID
+    윤아 자료실 링크는 고정.
+  */
+  :root {
+    --g1: #3A45D6; --g2: #4A63E0; --g3: #5A8FE6; --g4: #5EA9EA;
+    --accent: #4FC6E9;
+    --navy: #1C2470;
+  }
+  html, body { margin: 0; height: 100%; background: transparent; }
+  body {
+    font-family: "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+    -webkit-font-smoothing: antialiased;
+    word-break: keep-all;
+  }
+  .row {
+    box-sizing: border-box;
+    height: 100%;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    padding: 2px;
+  }
+  .card {
+    position: relative;
+    display: flex; flex-direction: column; justify-content: space-between;
+    min-height: 0;
+    padding: 16px 16px 14px 20px;
+    border-radius: 10px;
+    overflow: hidden;
+    color: #fff;
+    text-decoration: none;
+    background: linear-gradient(115deg, var(--g1) 0%, var(--g2) 45%, var(--g3) 80%, var(--g4) 100%);
+    box-shadow: 0 2px 8px rgba(58, 69, 214, 0.18);
+    transition: transform .15s ease, box-shadow .15s ease;
+  }
+  .card::before {
+    content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 5px; background: var(--accent);
+  }
+  .card:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(58, 69, 214, 0.28); }
+  .head { display: flex; align-items: center; gap: 9px; }
+  .icon {
+    flex: none; width: 26px; height: 26px; border-radius: 7px;
+    background: rgba(255,255,255,0.95);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .icon svg { width: 15px; height: 15px; }
+  .title { font-size: 15.5px; font-weight: 900; letter-spacing: -0.01em; line-height: 1.25; }
+  .eyebrow {
+    font-family: "Inter", sans-serif; font-style: italic; font-weight: 900;
+    font-size: 10px; letter-spacing: 0.14em; opacity: 0.8; margin-bottom: 6px;
+  }
+  .link {
+    align-self: flex-start;
+    margin-top: 12px;
+    display: inline-flex; align-items: center; gap: 6px;
+    background: #fff; color: var(--navy);
+    border-radius: 6px; padding: 6px 10px;
+    font-size: 13px; font-weight: 700; white-space: nowrap;
+  }
+  .link .arrow { font-family: "Inter", sans-serif; font-weight: 900; }
+  .link .short { display: none; }
+  .card.disabled { pointer-events: none; }
+  .card.disabled .link { opacity: .6; }
+
+  /* 휴대폰처럼 좁은 화면: 세 칸 유지, 글자만 작게 */
+  @media (max-width: 520px) {
+    .row { gap: 7px; }
+    .card { padding: 11px 9px 10px 13px; border-radius: 9px; }
+    .card::before { width: 4px; }
+    .eyebrow { display: none; }
+    .head { flex-direction: column; align-items: flex-start; gap: 6px; }
+    .icon { width: 22px; height: 22px; border-radius: 6px; }
+    .icon svg { width: 13px; height: 13px; }
+    .title { font-size: 12.5px; }
+    .link { margin-top: 8px; font-size: 11.5px; padding: 4px 8px; gap: 4px; }
+    .link .full { display: none; }
+    .link .short { display: inline; }
+    .title { min-height: 2.5em; }
+  }
+</style>
+</head>
+<body>
+  <div class="row">
+    <a class="card" id="c-note" target="_blank" rel="noopener">
+      <div>
+        <div class="eyebrow">LATEST NOTE</div>
+        <div class="head"><span class="icon">STAR</span><span class="title">최근 노트</span></div>
+      </div>
+      <span class="link"><span class="full" id="t-note">피드백 보기</span><span class="short" id="s-note">보기</span><span class="arrow">→</span></span>
+    </a>
+    <a class="card" id="c-class" target="_blank" rel="noopener">
+      <div>
+        <div class="eyebrow">TODAY'S CLASS</div>
+        <div class="head"><span class="icon">STAR</span><span class="title">오늘의 수업 내용</span></div>
+      </div>
+      <span class="link"><span class="full" id="t-class">수업 정리</span><span class="short" id="s-class">보기</span><span class="arrow">→</span></span>
+    </a>
+    <a class="card" id="c-lib" target="_blank" rel="noopener" href="https://www.notion.so/2e3e06f7164681c2b8fceaa1e5f005c5">
+      <div>
+        <div class="eyebrow">LIBRARY</div>
+        <div class="head"><span class="icon">STAR</span><span class="title">윤아 자료실</span></div>
+      </div>
+      <span class="link"><span class="full">가이드 · 자료</span><span class="short">열기</span><span class="arrow">→</span></span>
+    </a>
+  </div>
+<script>
+  (function () {
+    var star = '<svg viewBox="0 0 24 24" aria-hidden="true"><defs><linearGradient id="sg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3A45D6"/><stop offset="1" stop-color="#5A8FE6"/></linearGradient></defs><path fill="url(#sg)" d="M12 0 C13 7.5 16.5 11 24 12 C16.5 13 13 16.5 12 24 C11 16.5 7.5 13 0 12 C7.5 11 11 7.5 12 0Z"/></svg>';
+    document.querySelectorAll('.icon').forEach(function (el) { el.innerHTML = star; });
+
+    var q = new URLSearchParams(location.search);
+    var idOk = function (v) { return /^[0-9a-fA-F]{32}$/.test((v || '').replace(/-/g, '')); };
+    function setCard(cardId, textId, shortId, label, suffix, pageId) {
+      var card = document.getElementById(cardId);
+      if (label) {
+        document.getElementById(textId).textContent = label + ' ' + suffix;
+        document.getElementById(shortId).textContent = label;
+      }
+      if (idOk(pageId)) card.href = 'https://www.notion.so/' + pageId.replace(/-/g, '');
+      else card.classList.add('disabled');
+    }
+    setCard('c-note', 't-note', 's-note', q.get('n'), '피드백 보기', q.get('nu'));
+    setCard('c-class', 't-class', 's-class', q.get('c'), '수업 정리', q.get('cu'));
+  })();
+</script>
+</body>
+</html>
