@@ -19,6 +19,7 @@
         cu : 오늘의 수업(수업 정리) 페이지 ID — 2번 칸 기본
         su : '내 능력치' 페이지 ID — cu 대신 주면 2번 칸이 '나의 능력치'로 바뀜(보류 중)
         lu : 자료실 ID (생략하면 윤아 자료실)
+        y  : b → 단색 파랑 (노랑 포인트를 흰색으로)
         m  : light | dark  (생략하면 기기 설정을 따름)
         t  : new  → 항상 새 탭으로 열기
     블록 높이가 커도 카드는 비율(1.55:1)을 지키고 가운데에 놓임. 권장 높이 약 230px (휴대폰에서도 3칸 그대로, 글씨만 작아짐)
@@ -70,6 +71,11 @@
   .card:hover .chk svg, .card:focus-visible .chk svg, .card.press .chk svg { opacity: 1; }
   .card:hover .blk, .card:focus-visible .blk, .card.press .blk { background: #fff; }
   .card:hover .bar, .card:focus-visible .bar, .card.press .bar { width: 100%; max-width: 100%; background: var(--y); }
+
+  /* y=b → 단색 파랑 (노랑 포인트 대신 흰색) */
+  :root.mono .card:hover .chk, :root.mono .card:focus-visible .chk, :root.mono .card.press .chk { background: #fff; border-color: #fff; }
+  :root.mono .chk path { stroke: var(--b); }
+  :root.mono .card:hover .bar, :root.mono .card:focus-visible .bar, :root.mono .card.press .bar { background: #fff; }
   @media (hover: none) { .card:hover { transform: none; background: var(--cb); box-shadow: none; } }
 </style>
 </head>
@@ -97,6 +103,7 @@
 <script>
 (function () {
   var q = new URLSearchParams(location.search);
+  if (q.get('y') === 'b') document.documentElement.classList.add('mono');
   if (q.get('m') === 'dark') document.documentElement.classList.add('dark');
   if (q.get('m') === 'light') document.documentElement.classList.add('light');
   var ok = function (v) { return /^[0-9a-fA-F]{32}$/.test(v || ''); };
