@@ -14,9 +14,10 @@
     (마우스를 올리면: 카드가 뜨고 → 파랑으로 바뀜 / 카드 전체가 링크)
 
     노션 임베드 주소:
-      yuna-cards.html?nu=최근노트ID&su=능력치페이지ID
+      yuna-cards.html?nu=최근노트ID&cu=수업정리ID
         nu : 최근 노트 노션 페이지 ID (32자리, 매주 바뀜)
-        su : '내 능력치' 페이지 ID
+        cu : 오늘의 수업(수업 정리) 페이지 ID — 2번 칸 기본
+        su : '내 능력치' 페이지 ID — cu 대신 주면 2번 칸이 '나의 능력치'로 바뀜(보류 중)
         lu : 자료실 ID (생략하면 윤아 자료실)
         m  : light | dark  (생략하면 기기 설정을 따름)
         t  : new  → 항상 새 탭으로 열기
@@ -80,9 +81,9 @@
     <div class="blks"><span class="blk b"></span><span class="blk b"></span><span class="blk"></span><span class="blk"></span></div>
     <div class="num">01</div><div class="bar"></div>
   </a>
-  <a class="card" id="c2" href="#" aria-label="나의 능력치 열기">
+  <a class="card" id="c2" href="#" aria-label="오늘의 수업 열기">
     <div class="top"><span class="tag">[ #02 ]</span><span class="chk"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 8.5l3.5 3.5 7.5-8" fill="none" stroke="#0B1F66" stroke-width="2.6"/></svg></span></div>
-    <div class="t">나의 능력치</div><div class="rule"></div>
+    <div class="t" id="t2">오늘의 수업</div><div class="rule"></div>
     <div class="blks"><span class="blk b"></span><span class="blk b"></span><span class="blk"></span><span class="blk"></span></div>
     <div class="num">02</div><div class="bar"></div>
   </a>
@@ -99,7 +100,10 @@
   if (q.get('m') === 'dark') document.documentElement.classList.add('dark');
   if (q.get('m') === 'light') document.documentElement.classList.add('light');
   var ok = function (v) { return /^[0-9a-fA-F]{32}$/.test(v || ''); };
-  var ids = { c1: q.get('nu'), c2: q.get('su'), c3: ok(q.get('lu')) ? q.get('lu') : '2e3e06f7164681c2b8fceaa1e5f005c5' };
+  // 2번 칸: cu(오늘의 수업)가 기본, su(나의 능력치)를 주면 능력치 칸으로 바뀜
+  var c2id = q.get('cu'), skill = !ok(c2id) && ok(q.get('su'));
+  if (skill) { c2id = q.get('su'); document.getElementById('t2').textContent = '나의 능력치'; document.getElementById('c2').setAttribute('aria-label', '나의 능력치 열기'); }
+  var ids = { c1: q.get('nu'), c2: c2id, c3: ok(q.get('lu')) ? q.get('lu') : '2e3e06f7164681c2b8fceaa1e5f005c5' };
   var newTab = q.get('t') === 'new';
   Object.keys(ids).forEach(function (k) {
     var el = document.getElementById(k);
