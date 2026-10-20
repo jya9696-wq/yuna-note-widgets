@@ -11,7 +11,7 @@
 <style>
   /*
     학생 페이지 카드 3칸 위젯 · 시안 B+C+F
-    (마우스를 올리면: 카드가 뜨고 → 파랑으로 바뀌고 → 노란 꺾쇠가 펼쳐짐 / 카드 전체가 링크)
+    (마우스를 올리면: 카드가 뜨고 → 파랑으로 바뀜 / 카드 전체가 링크)
 
     노션 임베드 주소:
       yuna-cards.html?nu=최근노트ID&su=능력치페이지ID
@@ -57,14 +57,8 @@
     margin-top: auto; font-feature-settings: "zero" 1; transition: color .25s; }
   .bar { width: 26%; max-width: 44px; height: clamp(3px, .4vw, 4px); background: var(--b); margin-top: 5px;
     transition: width .35s ease, max-width .35s ease, background .25s; }
-  .cn { position: absolute; width: clamp(10px, 1.5vw, 16px); height: clamp(10px, 1.5vw, 16px);
-    border: 0 solid var(--y); opacity: 0; transition: all .25s ease; pointer-events: none; }
-  .cn.tl { top: 6px; left: 6px; border-top-width: 3px; border-left-width: 3px; }
-  .cn.tr { top: 6px; right: 6px; border-top-width: 3px; border-right-width: 3px; }
-  .cn.bl { bottom: 6px; left: 6px; border-bottom-width: 3px; border-left-width: 3px; }
-  .cn.br { bottom: 6px; right: 6px; border-bottom-width: 3px; border-right-width: 3px; }
 
-  /* B 들어올림 + C 파랑 반전 + F 노란 꺾쇠 */
+  /* B 들어올림 + C 파랑 반전 (꺾쇠는 뺌) */
   .card:hover, .card:focus-visible, .card.press {
     transform: translateY(-6px); background: var(--b); box-shadow: 0 14px 28px rgba(0,0,0,.18); }
   .card:hover .t, .card:hover .num, .card:focus-visible .t, .card:focus-visible .num,
@@ -75,32 +69,24 @@
   .card:hover .chk svg, .card:focus-visible .chk svg, .card.press .chk svg { opacity: 1; }
   .card:hover .blk, .card:focus-visible .blk, .card.press .blk { background: #fff; }
   .card:hover .bar, .card:focus-visible .bar, .card.press .bar { width: 100%; max-width: 100%; background: var(--y); }
-  .card:hover .cn, .card:focus-visible .cn, .card.press .cn { opacity: 1; }
-  .card:hover .cn.tl, .card:focus-visible .cn.tl, .card.press .cn.tl { top: -6px; left: -6px; }
-  .card:hover .cn.tr, .card:focus-visible .cn.tr, .card.press .cn.tr { top: -6px; right: -6px; }
-  .card:hover .cn.bl, .card:focus-visible .cn.bl, .card.press .cn.bl { bottom: -6px; left: -6px; }
-  .card:hover .cn.br, .card:focus-visible .cn.br, .card.press .cn.br { bottom: -6px; right: -6px; }
   @media (hover: none) { .card:hover { transform: none; background: var(--cb); box-shadow: none; } }
 </style>
 </head>
 <body>
 <div class="row">
   <a class="card" id="c1" href="#" aria-label="최근 노트 열기">
-    <span class="cn tl"></span><span class="cn tr"></span><span class="cn bl"></span><span class="cn br"></span>
     <div class="top"><span class="tag">[ #01 ]</span><span class="chk"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 8.5l3.5 3.5 7.5-8" fill="none" stroke="#0B1F66" stroke-width="2.6"/></svg></span></div>
     <div class="t">최근 노트</div><div class="rule"></div>
     <div class="blks"><span class="blk b"></span><span class="blk b"></span><span class="blk"></span><span class="blk"></span></div>
     <div class="num">01</div><div class="bar"></div>
   </a>
   <a class="card" id="c2" href="#" aria-label="나의 능력치 열기">
-    <span class="cn tl"></span><span class="cn tr"></span><span class="cn bl"></span><span class="cn br"></span>
     <div class="top"><span class="tag">[ #02 ]</span><span class="chk"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 8.5l3.5 3.5 7.5-8" fill="none" stroke="#0B1F66" stroke-width="2.6"/></svg></span></div>
     <div class="t">나의 능력치</div><div class="rule"></div>
     <div class="blks"><span class="blk b"></span><span class="blk b"></span><span class="blk"></span><span class="blk"></span></div>
     <div class="num">02</div><div class="bar"></div>
   </a>
   <a class="card" id="c3" href="#" aria-label="윤아 자료실 열기">
-    <span class="cn tl"></span><span class="cn tr"></span><span class="cn bl"></span><span class="cn br"></span>
     <div class="top"><span class="tag">[ #03 ]</span><span class="chk"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 8.5l3.5 3.5 7.5-8" fill="none" stroke="#0B1F66" stroke-width="2.6"/></svg></span></div>
     <div class="t">윤아 자료실</div><div class="rule"></div>
     <div class="blks"><span class="blk b"></span><span class="blk b"></span><span class="blk"></span><span class="blk"></span></div>
