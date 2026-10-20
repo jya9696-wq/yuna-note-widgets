@@ -42,7 +42,7 @@
 
   .card { position: relative; display: flex; flex-direction: column; min-width: 0;
     box-sizing: border-box; text-decoration: none; color: inherit; cursor: pointer;
-    background: var(--cb); border-radius: 10px; aspect-ratio: 1.2 / 1; max-height: calc(100vh - 30px);
+    background: var(--cb); border-radius: 10px; aspect-ratio: 1.55 / 1; max-height: calc(100vh - 30px);
     padding: clamp(10px, 2.2vw, 22px) clamp(10px, 2.4vw, 26px);
     transition: transform .25s ease, box-shadow .25s ease, background .25s ease; outline: none;
     -webkit-tap-highlight-color: transparent; }
@@ -92,21 +92,18 @@
     <div class="t">내 피드백 구간</div><div class="rule"></div>
     <div class="blks"><span class="blk b"></span><span class="blk b"></span><span class="blk"></span><span class="blk"></span></div>
     <div class="num">01</div><div class="bar"></div>
-    <div class="sub" id="s1"></div>
   </a>
   <a class="card" id="c2" href="#" aria-label="다음 과제">
     <div class="top"><span class="tag">[ #02 ]</span><span class="chk"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 8.5l3.5 3.5 7.5-8" fill="none" stroke="#0B1F66" stroke-width="2.6"/></svg></span></div>
     <div class="t">다음 과제</div><div class="rule"></div>
     <div class="blks"><span class="blk b"></span><span class="blk b"></span><span class="blk"></span><span class="blk"></span></div>
     <div class="num">02</div><div class="bar"></div>
-    <div class="sub" id="s2"></div>
   </a>
   <a class="card" id="c3" href="#" aria-label="지난 피드백">
     <div class="top"><span class="tag">[ #03 ]</span><span class="chk"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 8.5l3.5 3.5 7.5-8" fill="none" stroke="#0B1F66" stroke-width="2.6"/></svg></span></div>
     <div class="t">지난 피드백</div><div class="rule"></div>
     <div class="blks"><span class="blk b"></span><span class="blk b"></span><span class="blk"></span><span class="blk"></span></div>
     <div class="num">03</div><div class="bar"></div>
-    <div class="sub" id="s3"></div>
   </a>
 </div>
 <script>
@@ -136,8 +133,7 @@
   ];
   cards.forEach(function (c) {
     var el = document.getElementById('c' + c.k);
-    document.getElementById('s' + c.k).textContent = c.text || '—';
-    if (!c.url) { el.removeAttribute('href'); el.style.cursor = 'default'; if (!c.text) el.style.opacity = '.5'; return; }
+    if (!c.url) { el.removeAttribute('href'); el.style.cursor = 'default'; el.style.opacity = '.5'; return; }
     el.href = c.url; el.rel = 'noopener';
     el.target = c.top ? '_top' : '_blank';
     el.addEventListener('click', function (e) {
