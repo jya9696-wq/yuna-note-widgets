@@ -14,7 +14,8 @@
     (마우스를 올리면: 카드가 뜨고 → 파랑으로 바뀜 / 카드 전체가 링크)
 
     노션 임베드 주소:
-      yuna-note-cards.html?v=영상ID&a=0:02:14~0:42:24&b=다음과제&bt=3:45:58&p=지난노트ID&pd=10/10
+      yuna-note-cards.html?v=영상ID&a=0.02.14-0.42.24&b=다음과제&bt=13558&p=지난노트ID&pd=10.10
+      (노션에서 : ~ / 를 넣으면 임베드가 빈 칸이 되므로 . - 와 초 단위를 씀)
         v  : 유튜브 영상 ID (youtu.be/ 뒤 11자리)
         a  : 1번 '내 피드백 구간' — 시작~끝. 누르면 시작 시간부터 영상이 열림
         b  : 2번 '다음 과제' 한 줄 (10자 이내)
@@ -120,15 +121,17 @@
   var sec = function (v) {
     v = (v || '').trim(); if (!v) return null;
     if (/^\d+$/.test(v)) return +v;
-    var p = v.split(':').map(Number); if (p.some(isNaN)) return null;
+    var p = v.split(/[:.]/).map(Number); if (p.some(isNaN)) return null;
     return p.reduce(function (a, x) { return a * 60 + x; }, 0);
   };
   var yt = function (t) { return okV && t != null ? 'https://youtu.be/' + vid + '?t=' + t : null; };
-  var a = (q.get('a') || '').replace(/\s*~\s*/, ' ~ ');
+  // 노션 임베드 주소에서 : ~ / 가 깨질 수 있어 . - 로도 받음 (0.02.14-0.42.24 → 0:02:14 ~ 0:42:24)
+  var a = (q.get('a') || '').replace(/\./g, ':').replace(/\s*[~-]\s*/, ' ~ ');
+  var pd = (q.get('pd') || '').replace(/\./g, '/');
   var cards = [
     { k: 1, text: a, url: yt(sec(a.split('~')[0])), top: false },
     { k: 2, text: q.get('b') || '', url: yt(sec(q.get('bt'))), top: false },
-    { k: 3, text: q.get('pd') ? q.get('pd') + ' 노트 보기 →' : (id32(q.get('p')) ? '지난 노트 보기 →' : ''),
+    { k: 3, text: pd ? pd + ' 노트 보기 →' : (id32(q.get('p')) ? '지난 노트 보기 →' : ''),
       url: id32(q.get('p')) ? 'https://www.notion.so/' + q.get('p') : null, top: true }
   ];
   cards.forEach(function (c) {
