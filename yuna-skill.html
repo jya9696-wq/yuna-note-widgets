@@ -10,24 +10,24 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Noto+Sans+KR:wght@500;700;800&display=swap" rel="stylesheet">
 <style>
   /*
-    학생 '내 능력치' 레이더 위젯 (한 달에 한 번 갱신)
-    - 열면 그래프가 가운데서 차오름. 가운데에는 종합 레벨(8개 평균).
-    - '지난 능력치' / '지금 능력치'를 누르면 그쪽 그래프와 종합 레벨이 강조되고 코멘트가 잠깐 떴다가 사라짐.
-    - 선생님용 수정 화면: 주소 끝에 &e=1 → 꼭짓점을 끌거나 숫자를 바꾸고, 코멘트를 쓰고, 새 주소를 복사.
+    학생 '내 능력치' 위젯 (한 달에 한 번 갱신) — 위: 팔각형 스테이터스 / 아래: 레벨 막대 (같은 숫자로 연동)
+    - 열면 지난 능력치 모양에서 지금 능력치 모양으로 부드럽게 커짐. 가운데 종합 레벨(8개 평균)도 같이 올라감.
+    - 처음엔 글씨·막대가 모두 기본색(검정/다크에선 밝은 회색), 오른 항목만 파랑으로 바뀜.
+    - '지난 능력치' / '지금 능력치'를 누르면 그쪽이 강조되고 코멘트가 잠깐 떴다가 사라짐.
+    - 선생님용 수정 화면: 주소 끝에 &e=1 → 꼭짓점 끌기 / 막대 칸 누르기 / 표 숫자 / 코멘트 수정 → '새 주소 복사'.
 
     노션 임베드 주소:
       yuna-skill.html?d=2026.10&now=4,3,4,2,4,3,3,4&prev=3,3,3,2,4,2,2,4&pc=지난코멘트&nc=지금코멘트
         숫자 순서 : 비율, 입체감, 선화, 채색 (주 능력치) / 얼굴·눈, 앵글·동세, 배경·디자인, 콘셉트 (부가 능력치)
-        d   : 기준 월 (예: 2026.10)     pc : 지난 능력치 코멘트     nc : 지금 능력치 코멘트(좋아진 점)
-        th  : light | dark (생략하면 기기 설정)     e : 1 → 수정 화면
-    위젯은 칸 크기에 맞춰 줄어들고 늘어남. 권장 높이: 가로와 비슷하게 (예: 가로 700이면 700).
+        th : light | dark (생략하면 기기 설정)     e : 1 → 수정 화면
+    권장 높이: 가로의 약 1.45배 (예: 가로 700이면 1010).
   */
-  :root { --bg:#FFFFFF; --cb:#F1F1EF; --g:#7C828C; --grid:rgba(124,130,140,.35); --ink:#37352F;
+  :root { --bg:#FFFFFF; --cb:#F1F1EF; --g:#7C828C; --grid:rgba(124,130,140,.32); --ink:#2F3437;
           --b:#1F92F9; --y:#F5B82E; --n:#0B1F66; }
   @media (prefers-color-scheme: dark) {
-    :root:not(.light) { --bg:#191919; --cb:#2F2F2F; --g:#9A9FA8; --grid:rgba(154,159,168,.3); --ink:#E6E6E6; }
+    :root:not(.light) { --bg:#191919; --cb:#2F2F2F; --g:#9A9FA8; --grid:rgba(154,159,168,.28); --ink:#E3E3E3; }
   }
-  :root.dark { --bg:#191919; --cb:#2F2F2F; --g:#9A9FA8; --grid:rgba(154,159,168,.3); --ink:#E6E6E6; }
+  :root.dark { --bg:#191919; --cb:#2F2F2F; --g:#9A9FA8; --grid:rgba(154,159,168,.28); --ink:#E3E3E3; }
   html, body { margin:0; height:100%; background:var(--bg); color:var(--ink); overflow:hidden; -webkit-font-smoothing:antialiased;
     font-family:"Noto Sans KR", sans-serif; }
   .wrap { position:relative; height:100%; display:flex; align-items:center; justify-content:center; }
@@ -35,74 +35,81 @@
 
   .legend { cursor:pointer; }
   .legend rect.hit { fill:transparent; }
-  .legend text { font:500 26px "Noto Sans KR"; fill:var(--g); transition:fill .2s; }
+  .legend text { font:500 26px "Noto Sans KR"; fill:var(--g); }
   .legend.nowbtn text { fill:var(--b); font-weight:800; }
   .legend:hover text { text-decoration:underline; }
   .legend:focus { outline:none; } .legend:focus-visible .hit { stroke:var(--y); stroke-width:3; }
-  .legend .chip { transition:transform .2s; transform-box:fill-box; transform-origin:center; }
-  .legend:hover .chip { transform:scale(1.2); }
   .hint { font:400 20px "DM Mono"; fill:var(--g); }
 
   .gridline { fill:none; stroke:var(--grid); stroke-width:1.5; }
   .gridline.out { stroke-width:2.5; }
   .spoke { stroke:var(--grid); stroke-width:1.5; }
-  .spoke.main { stroke:var(--b); opacity:.45; }
 
-  .prev { fill:var(--g); fill-opacity:.12; stroke:var(--g); stroke-width:3; stroke-dasharray:8 6; transition:all .3s; }
-  .now { fill:var(--b); fill-opacity:.26; stroke:var(--b); stroke-width:5; stroke-linejoin:round; transition:all .3s; }
-  .nowg { transform-box:view-box; transform-origin:500px 480px; }
-  .anim .prev { opacity:0; animation:fade .6s .1s forwards; }
-  .anim .nowg { transform:scale(0); animation:grow 1.3s .45s cubic-bezier(.16,1,.3,1) forwards; }
-  .anim .up, .anim .totals { opacity:0; animation:fade .3s 1.8s forwards; }
-  .anim .badge { opacity:0; animation:fade .4s 2.1s forwards; }
-  @keyframes grow { to { transform:scale(1); } }
-  @keyframes fade { to { opacity:1; } }
+  .prev { fill:var(--g); fill-opacity:.1; stroke:var(--g); stroke-width:3; stroke-dasharray:8 6; transition:fill-opacity .3s, opacity .3s; }
+  .now { fill:var(--b); fill-opacity:.24; stroke:var(--b); stroke-width:5; stroke-linejoin:round; transition:fill-opacity .3s, stroke-opacity .3s; }
 
-  .lab.main { font:800 40px "Noto Sans KR"; fill:var(--b); }
-  .lab.sub { font:500 28px "Noto Sans KR"; fill:var(--g); }
-  .up { font:500 22px "DM Mono"; fill:var(--y); }
+  /* 글씨: 기본은 모두 같은 색, 오른 항목만 파랑 */
+  .lab { fill:var(--ink); transition:fill .5s; }
+  .lab.main { font:800 38px "Noto Sans KR"; }
+  .lab.sub { font:500 28px "Noto Sans KR"; }
+  .done .upl { fill:var(--b); }
+  .up { font:500 22px "DM Mono"; fill:var(--b); opacity:0; transition:opacity .4s; }
+  .done .up { opacity:1; }
+  .badge { opacity:0; transition:opacity .4s .3s; }
+  .done .badge { opacity:1; }
   .badge rect { fill:var(--y); }
   .badge text { font:800 26px "Noto Sans KR"; fill:var(--n); }
 
   /* 가운데 종합 레벨 */
-  .total { pointer-events:none; }
+  .total { pointer-events:none; transition:opacity .25s; }
+  .total .bgc { fill:var(--bg); opacity:.85; }
   .total .k { font:500 20px "DM Mono"; letter-spacing:3px; }
   .total .v { font:500 54px "DM Mono"; letter-spacing:-2px; }
-  .total .bgc { fill:var(--bg); opacity:.82; }
   .tn .k, .tn .v { fill:var(--b); }
   .tp .k, .tp .v { fill:var(--g); }
-  .tp { opacity:0; transition:opacity .25s; } .tn { transition:opacity .25s; }
-
-  /* 선택 상태 */
-  .sel-prev .prev { fill-opacity:.32; stroke-dasharray:none; stroke-width:4; }
-  .sel-prev .now { fill-opacity:.06; stroke-opacity:.25; }
+  .tp { opacity:0; }
   .sel-prev .tp { opacity:1; } .sel-prev .tn { opacity:0; }
-  .sel-now .prev { opacity:.25 !important; }
-  .sel-now .now { fill-opacity:.38; }
+  .sel-prev .prev { fill-opacity:.32; stroke-dasharray:none; stroke-width:4; }
+  .sel-prev .now { fill-opacity:.05; stroke-opacity:.2; }
+  .sel-now .prev { opacity:.2; }
+  .sel-now .now { fill-opacity:.36; }
 
   .bubble { box-sizing:border-box; width:100%; padding:16px 24px; border-radius:14px; font-size:29px; line-height:1.5;
     font-weight:500; opacity:0; transform:translateY(12px); transition:opacity .3s ease, transform .3s ease; }
   .bubble.show { opacity:1; transform:translateY(0); }
-  .tip { font:400 22px "DM Mono"; fill:var(--g); transition:opacity .3s; }
-  .sel-prev .tip, .sel-now .tip { opacity:0; }
   .bubble.p { background:var(--cb); color:var(--ink); border:2px dashed var(--g); }
   .bubble.n { background:var(--b); color:#fff; }
   .bubble b { display:block; font:500 20px "DM Mono"; letter-spacing:1px; margin-bottom:4px; opacity:.85; }
   .bubble.n b { color:#FFE3A3; }
+  .tip { font:400 22px "DM Mono"; fill:var(--g); transition:opacity .3s; }
+  .sel-prev .tip, .sel-now .tip { opacity:0; }
+
+  /* 아래 레벨 막대 */
+  .sec { font:800 30px "Noto Sans KR"; fill:var(--ink); }
+  .sec.sub { font:500 26px "Noto Sans KR"; fill:var(--g); }
+  .secline { stroke:var(--ink); stroke-width:3; } .secline.sub { stroke:var(--grid); stroke-width:2; }
+  .tag { font:400 20px "DM Mono"; fill:var(--g); letter-spacing:2px; }
+  .bname { fill:var(--ink); transition:fill .5s; }
+  .bname.main { font:800 32px "Noto Sans KR"; } .bname.sub { font:500 26px "Noto Sans KR"; }
+  .blv { font:500 30px "DM Mono"; fill:var(--ink); transition:fill .5s; } .blv.sub { font-size:24px; }
+  .done .bname.upl, .done .blv.upl { fill:var(--b); }
+  .seg { fill:var(--grid); }
+  .seg.base { fill:var(--ink); opacity:.8; }
+  .seg.gain { fill:var(--b); opacity:0; transition:opacity .35s; }
+  .done .seg.gain { opacity:1; }
+  .seg.hit { fill:transparent; cursor:pointer; }
 
   /* 수정 화면 (e=1) */
-  .edit body, body.edit { overflow:auto; }
   body.edit .wrap { height:auto; }
   body.edit svg { height:auto; max-height:none; max-width:720px; margin:0 auto; }
   .handle { fill:#fff; stroke:var(--b); stroke-width:4; cursor:grab; }
   .handle.p { stroke:var(--g); }
-  .handle:active { cursor:grabbing; }
   .panel { max-width:720px; margin:0 auto; padding:8px 20px 40px; box-sizing:border-box; display:flex; flex-direction:column; gap:16px; }
   .panel h2 { margin:8px 0 0; font-size:20px; color:var(--b); }
-  .seg { display:flex; gap:8px; flex-wrap:wrap; }
-  .seg button, .btn { font:500 15px "Noto Sans KR"; padding:10px 16px; min-height:44px; border-radius:8px; border:2px solid var(--b);
+  .row2 { display:flex; gap:8px; flex-wrap:wrap; }
+  .row2 button { font:500 15px "Noto Sans KR"; padding:10px 16px; min-height:44px; border-radius:8px; border:2px solid var(--b);
     background:transparent; color:var(--b); cursor:pointer; }
-  .seg button.on, .btn.primary { background:var(--b); color:#fff; }
+  .row2 button.on, .row2 button.primary { background:var(--b); color:#fff; }
   table { border-collapse:collapse; width:100%; font-size:15px; }
   th, td { padding:6px 8px; border-bottom:1px solid var(--grid); text-align:left; }
   td input { width:64px; font:500 16px "DM Mono"; padding:6px; border-radius:6px; border:1px solid var(--grid); background:var(--cb); color:var(--ink); }
@@ -115,7 +122,7 @@
 </head>
 <body>
 <div class="wrap" id="wrap">
-  <svg id="s" viewBox="0 0 1000 1010" role="img" aria-label="능력치 레이더 그래프"></svg>
+  <svg id="s" viewBox="0 0 1000 1440" role="img" aria-label="능력치 스테이터스와 레벨 막대"></svg>
 </div>
 <script>
 (function () {
@@ -137,59 +144,60 @@
   };
 
   var ORDER = [0,4,1,5,2,6,3,7];          // 주 능력치는 위·오른쪽·아래·왼쪽, 부가는 대각선
-  var cx = 500, cy = 480, R = 270, MAX = 5, N = 8;
+  var cx = 500, cy = 470, R = 265, MAX = 5, N = 8;
   var NS = 'http://www.w3.org/2000/svg', s = document.getElementById('s'), wrap = document.getElementById('wrap');
   function el(tag, attrs, parent, text) { var e = document.createElementNS(NS, tag);
     for (var k in attrs) e.setAttribute(k, attrs[k]); if (text != null) e.textContent = text; (parent || s).appendChild(e); return e; }
   function ang(i) { return -Math.PI / 2 + i * 2 * Math.PI / N; }
   function pt(i, v) { return [cx + R * v / MAX * Math.cos(ang(i)), cy + R * v / MAX * Math.sin(ang(i))]; }
   function poly(vals) { return ORDER.map(function (k, i) { return pt(i, vals[k]).map(function (n) { return n.toFixed(1); }).join(' '); }).join(' '); }
-  function avg(a) { return (a.reduce(function (x, y) { return x + y; }, 0) / a.length).toFixed(1); }
+  function avg(a) { return a.reduce(function (x, y) { return x + y; }, 0) / a.length; }
 
-  var bubble, timer, lp, ln;
+  var bubble, timer, nowPoly, tnText, raf;
   function render(animate) {
+    cancelAnimationFrame(raf);
     while (s.firstChild) s.removeChild(s.firstChild);
-    s.setAttribute('class', animate ? 'anim' : '');
+    s.classList.toggle('done', !animate);
+    var up = st.now.map(function (v, k) { return v - st.prev[k]; });
 
     function legend(x, label, cls, dashed) {
       var g = el('g', { class: 'legend ' + cls, tabindex: '0', role: 'button', 'aria-label': label + ' 보기' });
       el('rect', { class: 'hit', x: x - 10, y: 24, width: 220, height: 56 }, g);
-      if (dashed) el('rect', { class: 'chip', x: x, y: 40, width: 22, height: 22, fill: 'none', stroke: 'var(--g)', 'stroke-width': 3, 'stroke-dasharray': '5 4' }, g);
-      else el('rect', { class: 'chip', x: x, y: 40, width: 22, height: 22, fill: 'var(--b)' }, g);
+      if (dashed) el('rect', { x: x, y: 40, width: 22, height: 22, fill: 'none', stroke: 'var(--g)', 'stroke-width': 3, 'stroke-dasharray': '5 4' }, g);
+      else el('rect', { x: x, y: 40, width: 22, height: 22, fill: 'var(--b)' }, g);
       el('text', { x: x + 34, y: 61 }, g, label);
+      g.addEventListener('click', function () { pick(cls === 'prevbtn' ? 'p' : 'n'); });
+      g.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick(cls === 'prevbtn' ? 'p' : 'n'); } });
       return g;
     }
-    lp = legend(40, '지난 능력치', 'prevbtn', true);
-    ln = legend(250, '지금 능력치', 'nowbtn', false);
+    legend(40, '지난 능력치', 'prevbtn', true);
+    legend(250, '지금 능력치', 'nowbtn', false);
     el('text', { class: 'hint', x: 960, y: 61, 'text-anchor': 'end' }, s, '[ SKILL MAP ' + st.d + ' ]');
 
+    // ── 팔각형 스테이터스
     for (var k = 1; k <= MAX; k++)
       el('polygon', { class: 'gridline' + (k === MAX ? ' out' : ''),
         points: ORDER.map(function (_, i) { return pt(i, k).map(function (n) { return n.toFixed(1); }).join(' '); }).join(' ') });
     ORDER.forEach(function (key, i) { var p = pt(i, MAX);
-      el('line', { class: 'spoke' + (MAIN[key] ? ' main' : ''), x1: cx, y1: cy, x2: p[0].toFixed(1), y2: p[1].toFixed(1) }); });
-
+      el('line', { class: 'spoke', x1: cx, y1: cy, x2: p[0].toFixed(1), y2: p[1].toFixed(1) }); });
     el('polygon', { class: 'prev', points: poly(st.prev) });
-    var g = el('g', { class: 'nowg' });
-    el('polygon', { class: 'now', points: poly(st.now) }, g);
+    nowPoly = el('polygon', { class: 'now', points: poly(animate ? st.prev : st.now) });
 
-    // 가운데 종합 레벨
-    var tw = el('g', { class: 'totals' });
     [['tn', st.now], ['tp', st.prev]].forEach(function (p) {
-      var t = el('g', { class: 'total ' + p[0] }, tw);
+      var t = el('g', { class: 'total ' + p[0] });
       el('rect', { class: 'bgc', x: cx - 115, y: cy - 58, width: 230, height: 108, rx: 12 }, t);
       el('text', { class: 'k', x: cx, y: cy - 26, 'text-anchor': 'middle' }, t, p[0] === 'tn' ? '종합 TOTAL' : '지난 TOTAL');
-      el('text', { class: 'v', x: cx, y: cy + 36, 'text-anchor': 'middle' }, t, 'Lv.' + avg(p[1]));
+      var v = el('text', { class: 'v', x: cx, y: cy + 36, 'text-anchor': 'middle' }, t, 'Lv.' + avg(animate && p[0] === 'tn' ? st.prev : p[1]).toFixed(1));
+      if (p[0] === 'tn') tnText = v;
     });
 
     var ups = 0;
     ORDER.forEach(function (key, i) {
-      var a = ang(i), c = Math.cos(a), lx = cx + (R + 64) * c, ly = cy + (R + 64) * Math.sin(a);
+      var a = ang(i), c = Math.cos(a), lx = cx + (R + 62) * c, ly = cy + (R + 62) * Math.sin(a);
       var anchor = Math.abs(c) < .3 ? 'middle' : (c > 0 ? 'start' : 'end');
       if (anchor === 'start') lx -= 22; if (anchor === 'end') lx += 22;
-      var main = MAIN[key], size = main ? 40 : 28;
-      var t = el('text', { class: 'lab ' + (main ? 'main' : 'sub'), x: lx.toFixed(1), y: (ly + size * .35).toFixed(1), 'text-anchor': anchor }, s, NAMES[key]);
-      var d = st.now[key] - st.prev[key];
+      var main = MAIN[key], size = main ? 38 : 28, d = up[key];
+      var t = el('text', { class: 'lab ' + (main ? 'main' : 'sub') + (d > 0 ? ' upl' : ''), x: lx.toFixed(1), y: (ly + size * .35).toFixed(1), 'text-anchor': anchor }, s, NAMES[key]);
       if (d > 0) {
         ups++;
         var w = t.getComputedTextLength ? t.getComputedTextLength() : size * NAMES[key].length;
@@ -197,32 +205,80 @@
         el('text', { class: 'up', x: ux.toFixed(1), y: (ly + 4).toFixed(1) }, s, '▲+' + d);
       }
     });
-
     if (ups > 0) {
       var bg = el('g', { class: 'badge' });
       el('rect', { x: 600, y: 96, width: 360, height: 52 }, bg);
       el('text', { x: 780, y: 131, 'text-anchor': 'middle' }, bg, '여기까지 올라왔어요!  ▲' + ups);
     }
-
-    el('text', { class: 'tip', x: 500, y: 930, 'text-anchor': 'middle' }, s,
-      EDIT ? '꼭짓점을 끌어서 레벨을 바꿀 수 있어요' : '▲ 위의 "지난 능력치" · "지금 능력치"를 눌러 보세요');
-    var fo = el('foreignObject', { x: 40, y: 852, width: 920, height: 150 });
+    el('text', { class: 'tip', x: 500, y: 912, 'text-anchor': 'middle' }, s,
+      EDIT ? '꼭짓점을 끌거나 아래 막대 칸을 눌러 레벨을 바꿀 수 있어요' : '▲ 위의 "지난 능력치" · "지금 능력치"를 눌러 보세요');
+    var fo = el('foreignObject', { x: 40, y: 836, width: 920, height: 150 });
     bubble = document.createElement('div'); bubble.className = 'bubble'; bubble.setAttribute('role', 'status'); bubble.setAttribute('aria-live', 'polite');
     fo.appendChild(bubble);
 
-    [[lp, 'p'], [ln, 'n']].forEach(function (pair) {
-      pair[0].addEventListener('click', function () { pick(pair[1]); });
-      pair[0].addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick(pair[1]); } });
+    // ── 아래 레벨 막대 (위 스테이터스와 같은 숫자)
+    var y0 = 1000;
+    el('line', { class: 'secline', x1: 40, y1: y0, x2: 960, y2: y0 });
+    el('text', { class: 'sec', x: 40, y: y0 + 48 }, s, '주 능력치');
+    el('text', { class: 'tag', x: 960, y: y0 + 46, 'text-anchor': 'end' }, s, 'MAIN');
+    function bars(key, x, y, w, h, gap, sub) {
+      var v = st.now[key], p = st.prev[key], sw = (w - gap * 4) / 5;
+      for (var k = 0; k < MAX; k++) {
+        var sx = x + k * (sw + gap), cls = 'seg';
+        if (k < Math.min(v, p)) cls += ' base';
+        else if (k < v) cls += ' gain';
+        if (cls.indexOf('gain') > -1) el('rect', { class: 'seg', x: sx.toFixed(1), y: y, width: sw.toFixed(1), height: h });
+        var r = el('rect', { class: cls, x: sx.toFixed(1), y: y, width: sw.toFixed(1), height: h });
+        if (cls.indexOf('gain') > -1) r.style.transitionDelay = (0.15 * (k - p) + (sub ? .3 : 0)) + 's';
+        if (EDIT) {
+          var hit = el('rect', { class: 'seg hit', x: sx.toFixed(1), y: y - 8, width: sw.toFixed(1), height: h + 16 });
+          (function (lv) { hit.addEventListener('click', function () { st[st.target][key] = lv; render(false); syncPanel(); }); })(k + 1);
+        }
+      }
+    }
+    var yy = y0 + 84;
+    [0,1,2,3].forEach(function (key) {
+      var u = up[key] > 0 ? ' upl' : '';
+      el('text', { class: 'bname main' + u, x: 40, y: yy + 30 }, s, NAMES[key]);
+      bars(key, 220, yy + 6, 600, 30, 8, false);
+      el('text', { class: 'blv' + u, x: 960, y: yy + 33, 'text-anchor': 'end' }, s, 'Lv.' + st.now[key]);
+      yy += 62;
+    });
+    yy += 14;
+    el('line', { class: 'secline sub', x1: 40, y1: yy, x2: 960, y2: yy });
+    el('text', { class: 'sec sub', x: 40, y: yy + 44 }, s, '부가 능력치');
+    el('text', { class: 'tag', x: 960, y: yy + 42, 'text-anchor': 'end' }, s, 'SUB');
+    yy += 72;
+    [4,5,6,7].forEach(function (key, j) {
+      var x = j % 2 ? 530 : 40, y = yy + Math.floor(j / 2) * 56, u = up[key] > 0 ? ' upl' : '';
+      el('text', { class: 'bname sub' + u, x: x, y: y + 22 }, s, NAMES[key]);
+      bars(key, x + 175, y + 4, 180, 20, 6, true);
+      el('text', { class: 'blv sub' + u, x: x + 430, y: y + 24, 'text-anchor': 'end' }, s, 'Lv.' + st.now[key]);
     });
 
     if (EDIT) {
       var vals = st[st.target];
       ORDER.forEach(function (key, i) {
         var p = pt(i, vals[key]);
-        var h = el('circle', { class: 'handle' + (st.target === 'prev' ? ' p' : ''), cx: p[0].toFixed(1), cy: p[1].toFixed(1), r: 16,
-          'aria-label': NAMES[key] + ' 레벨 끌기' });
+        var h = el('circle', { class: 'handle' + (st.target === 'prev' ? ' p' : ''), cx: p[0].toFixed(1), cy: p[1].toFixed(1), r: 16 });
         h.addEventListener('pointerdown', function (e) { e.preventDefault(); drag = { key: key, i: i }; });
       });
+    }
+
+    // ── 지난 모양 → 지금 모양으로 부드럽게 커짐
+    if (animate) {
+      var t0 = null, DUR = 1600, DELAY = 500;
+      var a0 = avg(st.prev), a1 = avg(st.now);
+      function ease(t) { return 1 - Math.pow(1 - t, 3); }
+      function step(ts) {
+        if (t0 === null) t0 = ts;
+        var t = Math.max(0, Math.min(1, (ts - t0 - DELAY) / DUR)), e = ease(t);
+        var cur = st.prev.map(function (p, k) { return p + (st.now[k] - p) * e; });
+        nowPoly.setAttribute('points', poly(cur));
+        tnText.textContent = 'Lv.' + (a0 + (a1 - a0) * e).toFixed(1);
+        if (t < 1) raf = requestAnimationFrame(step); else s.classList.add('done');
+      }
+      raf = requestAnimationFrame(step);
     }
   }
 
@@ -260,19 +316,19 @@
     var panel = document.createElement('div'); panel.className = 'panel';
     panel.innerHTML =
       '<h2>능력치 수정 (선생님용)</h2>' +
-      '<p class="note">여기서 바꾼 내용은 이 화면에만 보여요. 다 고친 뒤 아래 "새 주소 복사"를 눌러 노션 위젯 주소를 바꿔 주세요.</p>' +
-      '<div class="seg"><button type="button" data-t="now" class="on">지금 능력치 끌어서 수정</button><button type="button" data-t="prev">지난 능력치 끌어서 수정</button></div>' +
+      '<p class="note">위 그래프 꼭짓점을 끌거나, 막대 칸을 누르거나, 표에 숫자를 넣으면 위아래가 같이 바뀌어요. 여기서 바꾼 건 이 화면에만 보이니까, 다 고친 뒤 "새 주소 복사"로 노션 위젯 주소를 바꿔 주세요.</p>' +
+      '<div class="row2"><button type="button" data-t="now" class="on">지금 능력치 수정</button><button type="button" data-t="prev">지난 능력치 수정</button></div>' +
       '<table><thead><tr><th>항목</th><th>지난</th><th>지금</th></tr></thead><tbody id="rows"></tbody></table>' +
       '<label>기준 월<input type="text" id="d"></label>' +
       '<label>지난 능력치 코멘트<textarea id="pc" rows="2"></textarea></label>' +
       '<label>지금 능력치 코멘트 (좋아진 점)<textarea id="nc" rows="2"></textarea></label>' +
       '<label>새 위젯 주소<textarea id="out" class="out" readonly></textarea></label>' +
-      '<div class="seg"><button type="button" class="btn primary" id="copy">새 주소 복사</button><button type="button" class="btn" id="play">미리보기 다시 재생</button></div>';
+      '<div class="row2"><button type="button" class="primary" id="copy">새 주소 복사</button><button type="button" id="play">애니메이션 미리보기</button></div>';
     document.body.appendChild(panel);
     var rows = panel.querySelector('#rows');
     NAMES.forEach(function (nm, k) {
       var tr = document.createElement('tr');
-      tr.innerHTML = '<td>' + nm + (MAIN[k] ? ' <b style="color:var(--b)">주</b>' : '') + '</td>' +
+      tr.innerHTML = '<td>' + nm + (MAIN[k] ? ' <b style="color:var(--g)">주</b>' : '') + '</td>' +
         '<td><input type="number" min="0" max="5" data-s="prev" data-k="' + k + '" aria-label="' + nm + ' 지난 레벨"></td>' +
         '<td><input type="number" min="0" max="5" data-s="now" data-k="' + k + '" aria-label="' + nm + ' 지금 레벨"></td>';
       rows.appendChild(tr);
