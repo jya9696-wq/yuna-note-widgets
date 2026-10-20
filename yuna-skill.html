@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<meta name="color-scheme" content="light dark">
+<title>YUNA 능력치</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Noto+Sans+KR:wght@500;700;800&display=swap" rel="stylesheet">
+<style>
+  /*
+    학생 '내 능력치' 레이더 위젯 (한 달에 한 번 갱신)
+    열면 그래프가 가운데서 차오르고, '지난 능력치' / '지금 능력치'를 누르면
+    그쪽 그래프가 강조되면서 코멘트가 잠깐 떴다가 사라짐.
+
+    노션 임베드 주소:
+      yuna-skill.html?d=2026.10&now=4,3,4,2,4,3,3,4&prev=3,3,3,2,4,2,2,4&pc=지난코멘트&nc=지금코멘트
+        숫자 순서 : 비율, 입체감, 선화, 채색 (주 능력치) / 얼굴·눈, 앵글·동세, 배경·디자인, 콘셉트 (부가 능력치)
+        d   : 기준 월 (예: 2026.10)
+        pc  : 지난 능력치 코멘트 (지난 달 상태)
+        nc  : 지금 능력치 코멘트 (어떤 부분이 좋아졌는지)
+        th  : light | dark (생략하면 기기 설정)
+    위젯은 칸 크기에 맞춰 줄어들고 늘어남. 권장 높이: 가로의 0.9배 정도 (예: 가로 700이면 630).
+  */
+  :root { --bg:#FFFFFF; --cb:#F1F1EF; --g:#7C828C; --grid:rgba(124,130,140,.35); --ink:#37352F;
+          --b:#1F92F9; --y:#F5B82E; --n:#0B1F66; }
+  @media (prefers-color-scheme: dark) {
+    :root:not(.light) { --bg:#191919; --cb:#2F2F2F; --g:#9A9FA8; --grid:rgba(154,159,168,.3); --ink:#E6E6E6; }
+  }
+  :root.dark { --bg:#191919; --cb:#2F2F2F; --g:#9A9FA8; --grid:rgba(154,159,168,.3); --ink:#E6E6E6; }
+  html, body { margin:0; height:100%; background:var(--bg); overflow:hidden; -webkit-font-smoothing:antialiased;
+    font-family:"Noto Sans KR", sans-serif; }
+  .wrap { position:relative; height:100%; display:flex; align-items:center; justify-content:center; }
+  svg { width:100%; height:100%; max-height:100vh; display:block; }
+
+  .legend { cursor:pointer; }
+  .legend rect.hit { fill:transparent; }
+  .legend text { font:500 26px "Noto Sans KR"; fill:var(--g); transition:fill .2s; }
+  .legend.nowbtn text { fill:var(--b); font-weight:800; }
+  .legend:hover text { text-decoration:underline; }
+  .legend:focus { outline:none; } .legend:focus-visible .hit { stroke:var(--y); stroke-width:3; }
+  .legend .chip { transition:transform .2s; transform-box:fill-box; transform-origin:center; }
+  .legend:hover .chip { transform:scale(1.2); }
+  .hint { font:400 20px "DM Mono"; fill:var(--g); }
+
+  .gridline { fill:none; stroke:var(--grid); stroke-width:1.5; }
+  .gridline.out { stroke-width:2.5; }
+  .spoke { stroke:var(--grid); stroke-width:1.5; }
+  .spoke.main { stroke:var(--b); opacity:.45; }
+
+  .prev { fill:var(--g); fill-opacity:.12; stroke:var(--g); stroke-width:3; stroke-dasharray:8 6;
+          opacity:0; animation:fade .6s .1s forwards; transition:all .3s; }
+  .nowg { transform-box:view-box; transform-origin:500px 480px; transform:scale(0);
+          animation:grow 1.3s .45s cubic-bezier(.16,1,.3,1) forwards; }
+  .now { fill:var(--b); fill-opacity:.26; stroke:var(--b); stroke-width:5; stroke-linejoin:round; transition:all .3s; }
+  @keyframes grow { to { transform:scale(1); } }
+  @keyframes fade { to { opacity:1; } }
+
+  .lab { font-family:"Noto Sans KR"; }
+  .lab.main { font-size:40px; font-weight:800; fill:var(--b); }
+  .lab.sub { font-size:28px; font-weight:500; fill:var(--g); }
+  .up { font:500 22px "DM Mono"; fill:var(--y); opacity:0; animation:fade .3s 1.8s forwards; }
+  .lv { font:500 22px "DM Mono"; opacity:0; transition:opacity .25s; pointer-events:none; }
+  .lv.p { fill:var(--g); } .lv.n { fill:var(--b); }
+
+  .badge { opacity:0; animation:fade .4s 2.1s forwards; }
+  .badge rect { fill:var(--y); }
+  .badge text { font:800 26px "Noto Sans KR"; fill:var(--n); }
+
+  /* 선택 상태 */
+  .sel-prev .prev { fill-opacity:.32; stroke-dasharray:none; stroke-width:4; }
+  .sel-prev .now { fill-opacity:.06; stroke-opacity:.25; }
+  .sel-prev .lv.p { opacity:1; }
+  .sel-now .prev { opacity:.25 !important; }
+  .sel-now .now { fill-opacity:.38; }
+  .sel-now .lv.n { opacity:1; }
+
+  .bubble { box-sizing:border-box; width:100%; padding:16px 24px; border-radius:14px; font-size:29px; line-height:1.5;
+    font-weight:500; opacity:0; transform:translateY(12px); transition:opacity .3s ease, transform .3s ease; }
+  .bubble.show { opacity:1; transform:translateY(0); }
+  .tip { font:400 22px "DM Mono"; fill:var(--g); transition:opacity .3s; }
+  .sel-prev .tip, .sel-now .tip { opacity:0; }
+  .bubble.p { background:var(--cb); color:var(--ink); border:2px dashed var(--g); }
+  .bubble.n { background:var(--b); color:#fff; }
+  .bubble b { display:block; font:500 20px "DM Mono"; letter-spacing:1px; margin-bottom:4px; opacity:.85; }
+  .bubble.n b { color:#FFE3A3; }
+</style>
+</head>
+<body>
+<div class="wrap" id="wrap">
+  <svg id="s" viewBox="0 0 1000 1010" role="img" aria-label="능력치 레이더 그래프"></svg>
+</div>
+<script>
+(function () {
+  var q = new URLSearchParams(location.search);
+  if (q.get('th') === 'dark') document.documentElement.classList.add('dark');
+  if (q.get('th') === 'light') document.documentElement.classList.add('light');
+  var NAMES = ['비율','입체감','선화','채색','얼굴·눈','앵글·동세','배경·디자인','콘셉트'];
+  var MAIN = [1,1,1,1,0,0,0,0];
+  function nums(s, d) { var a = (s || d).split(',').map(function (x) { return Math.max(0, Math.min(5, parseInt(x, 10) || 0)); });
+    while (a.length < 8) a.push(0); return a.slice(0, 8); }
+  var now = nums(q.get('now'), '4,3,4,2,4,3,3,4');
+  var prev = nums(q.get('prev'), '3,3,3,2,4,2,2,4');
+  var month = q.get('d') || '';
+  var pc = q.get('pc') || '지난 능력치 코멘트 자리예요.';
+  var nc = q.get('nc') || '지금 능력치 코멘트 자리예요.';
+
+  // 축 배치: 주 능력치는 위·오른쪽·아래·왼쪽, 부가 능력치는 대각선
+  var ORDER = [0,4,1,5,2,6,3,7];
+  var cx = 500, cy = 480, R = 270, MAX = 5, N = 8;
+  var NS = 'http://www.w3.org/2000/svg', s = document.getElementById('s');
+  function el(tag, attrs, parent, text) { var e = document.createElementNS(NS, tag);
+    for (var k in attrs) e.setAttribute(k, attrs[k]); if (text != null) e.textContent = text; (parent || s).appendChild(e); return e; }
+  function ang(i) { return -Math.PI / 2 + i * 2 * Math.PI / N; }
+  function pt(i, v) { return [cx + R * v / MAX * Math.cos(ang(i)), cy + R * v / MAX * Math.sin(ang(i))]; }
+  function poly(vals) { return ORDER.map(function (k, i) { return pt(i, vals[k]).map(function (n) { return n.toFixed(1); }).join(' '); }).join(' '); }
+
+  // 범례 (누르는 버튼)
+  function legend(x, label, cls, dashed) {
+    var g = el('g', { class: 'legend ' + cls, tabindex: '0', role: 'button', 'aria-label': label + ' 보기' });
+    el('rect', { class: 'hit', x: x - 10, y: 24, width: 220, height: 56 }, g);
+    if (dashed) el('rect', { class: 'chip', x: x, y: 40, width: 22, height: 22, fill: 'none', stroke: 'var(--g)', 'stroke-width': 3, 'stroke-dasharray': '5 4' }, g);
+    else el('rect', { class: 'chip', x: x, y: 40, width: 22, height: 22, fill: 'var(--b)' }, g);
+    el('text', { x: x + 34, y: 61 }, g, label);
+    return g;
+  }
+  var lp = legend(40, '지난 능력치', 'prevbtn', true);
+  var ln = legend(250, '지금 능력치', 'nowbtn', false);
+  el('text', { class: 'hint', x: 960, y: 61, 'text-anchor': 'end' }, s, '[ SKILL MAP ' + month + ' ]');
+
+  // 격자
+  for (var k = 1; k <= MAX; k++) {
+    el('polygon', { class: 'gridline' + (k === MAX ? ' out' : ''),
+      points: ORDER.map(function (_, i) { return pt(i, k).map(function (n) { return n.toFixed(1); }).join(' '); }).join(' ') });
+  }
+  ORDER.forEach(function (key, i) { var p = pt(i, MAX);
+    el('line', { class: 'spoke' + (MAIN[key] ? ' main' : ''), x1: cx, y1: cy, x2: p[0].toFixed(1), y2: p[1].toFixed(1) }); });
+
+  // 그래프
+  el('polygon', { class: 'prev', points: poly(prev) });
+  var g = el('g', { class: 'nowg' });
+  el('polygon', { class: 'now', points: poly(now) }, g);
+
+  // 레벨 숫자 (선택했을 때만 보임)
+  ORDER.forEach(function (key, i) {
+    [['p', prev], ['n', now]].forEach(function (pair) {
+      var v = pair[1][key], a = ang(i), r = R * v / MAX + 26;
+      el('text', { class: 'lv ' + pair[0], x: (cx + r * Math.cos(a)).toFixed(1), y: (cy + r * Math.sin(a) + 8).toFixed(1), 'text-anchor': 'middle' }, s, 'Lv.' + v);
+    });
+  });
+
+  // 축 이름 + 오른 항목 표시
+  var ups = 0;
+  ORDER.forEach(function (key, i) {
+    var a = ang(i), c = Math.cos(a), lx = cx + (R + 64) * c, ly = cy + (R + 64) * Math.sin(a);
+    var anchor = Math.abs(c) < .3 ? 'middle' : (c > 0 ? 'start' : 'end');
+    if (anchor === 'start') lx -= 22; if (anchor === 'end') lx += 22;
+    var main = MAIN[key], size = main ? 40 : 28;
+    var t = el('text', { class: 'lab ' + (main ? 'main' : 'sub'), x: lx.toFixed(1), y: (ly + size * .35).toFixed(1), 'text-anchor': anchor }, s, NAMES[key]);
+    var d = now[key] - prev[key];
+    if (d > 0) {
+      ups++;
+      var w = t.getComputedTextLength ? t.getComputedTextLength() : size * NAMES[key].length;
+      var ux = anchor === 'middle' ? lx + w / 2 + 8 : (anchor === 'end' ? lx + 8 : lx + w + 8);
+      el('text', { class: 'up', x: ux.toFixed(1), y: (ly + 4).toFixed(1) }, s, '▲+' + d);
+    }
+  });
+
+  // 배지
+  if (ups > 0) {
+    var bg = el('g', { class: 'badge' });
+    var msg = '여기까지 올라왔어요!  ▲' + ups;
+    el('rect', { x: 600, y: 96, width: 360, height: 52 }, bg);
+    el('text', { x: 780, y: 131, 'text-anchor': 'middle' }, bg, msg);
+  }
+
+  // 안내 문구 + 코멘트 자리 (그래프 아래)
+  el('text', { class: 'tip', x: 500, y: 930, 'text-anchor': 'middle' }, s, '▲ 위의 "지난 능력치" · "지금 능력치"를 눌러 보세요');
+  var fo = el('foreignObject', { x: 40, y: 852, width: 920, height: 150 });
+  var bubble = document.createElement('div'); bubble.className = 'bubble'; bubble.setAttribute('role', 'status'); bubble.setAttribute('aria-live', 'polite');
+  fo.appendChild(bubble);
+
+  // 누르면: 강조 + 코멘트가 떴다가 사라짐
+  var wrap = document.getElementById('wrap'), timer;
+  function pick(which) {
+    clearTimeout(timer);
+    wrap.classList.remove('sel-prev', 'sel-now');
+    wrap.classList.add(which === 'p' ? 'sel-prev' : 'sel-now');
+    bubble.className = 'bubble ' + which;
+    bubble.innerHTML = '';
+    var b = document.createElement('b'); b.textContent = which === 'p' ? 'LAST · 지난 능력치' : 'NOW · 이번에 좋아진 점';
+    bubble.appendChild(b); bubble.appendChild(document.createTextNode(which === 'p' ? pc : nc));
+    requestAnimationFrame(function () { bubble.classList.add('show'); });
+    timer = setTimeout(function () {
+      bubble.classList.remove('show');
+      setTimeout(function () { wrap.classList.remove('sel-prev', 'sel-now'); }, 300);
+    }, 4500);
+  }
+  [[lp, 'p'], [ln, 'n']].forEach(function (pair) {
+    pair[0].addEventListener('click', function () { pick(pair[1]); });
+    pair[0].addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick(pair[1]); } });
+  });
+})();
+</script>
+</body>
+</html>
