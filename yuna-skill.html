@@ -11,17 +11,16 @@
 <style>
   /*
     학생 '내 능력치' 레이더 위젯 (한 달에 한 번 갱신)
-    열면 그래프가 가운데서 차오르고, '지난 능력치' / '지금 능력치'를 누르면
-    그쪽 그래프가 강조되면서 코멘트가 잠깐 떴다가 사라짐.
+    - 열면 그래프가 가운데서 차오름. 가운데에는 종합 레벨(8개 평균).
+    - '지난 능력치' / '지금 능력치'를 누르면 그쪽 그래프와 종합 레벨이 강조되고 코멘트가 잠깐 떴다가 사라짐.
+    - 선생님용 수정 화면: 주소 끝에 &e=1 → 꼭짓점을 끌거나 숫자를 바꾸고, 코멘트를 쓰고, 새 주소를 복사.
 
     노션 임베드 주소:
       yuna-skill.html?d=2026.10&now=4,3,4,2,4,3,3,4&prev=3,3,3,2,4,2,2,4&pc=지난코멘트&nc=지금코멘트
         숫자 순서 : 비율, 입체감, 선화, 채색 (주 능력치) / 얼굴·눈, 앵글·동세, 배경·디자인, 콘셉트 (부가 능력치)
-        d   : 기준 월 (예: 2026.10)
-        pc  : 지난 능력치 코멘트 (지난 달 상태)
-        nc  : 지금 능력치 코멘트 (어떤 부분이 좋아졌는지)
-        th  : light | dark (생략하면 기기 설정)
-    위젯은 칸 크기에 맞춰 줄어들고 늘어남. 권장 높이: 가로의 0.9배 정도 (예: 가로 700이면 630).
+        d   : 기준 월 (예: 2026.10)     pc : 지난 능력치 코멘트     nc : 지금 능력치 코멘트(좋아진 점)
+        th  : light | dark (생략하면 기기 설정)     e : 1 → 수정 화면
+    위젯은 칸 크기에 맞춰 줄어들고 늘어남. 권장 높이: 가로와 비슷하게 (예: 가로 700이면 700).
   */
   :root { --bg:#FFFFFF; --cb:#F1F1EF; --g:#7C828C; --grid:rgba(124,130,140,.35); --ink:#37352F;
           --b:#1F92F9; --y:#F5B82E; --n:#0B1F66; }
@@ -29,10 +28,10 @@
     :root:not(.light) { --bg:#191919; --cb:#2F2F2F; --g:#9A9FA8; --grid:rgba(154,159,168,.3); --ink:#E6E6E6; }
   }
   :root.dark { --bg:#191919; --cb:#2F2F2F; --g:#9A9FA8; --grid:rgba(154,159,168,.3); --ink:#E6E6E6; }
-  html, body { margin:0; height:100%; background:var(--bg); overflow:hidden; -webkit-font-smoothing:antialiased;
+  html, body { margin:0; height:100%; background:var(--bg); color:var(--ink); overflow:hidden; -webkit-font-smoothing:antialiased;
     font-family:"Noto Sans KR", sans-serif; }
   .wrap { position:relative; height:100%; display:flex; align-items:center; justify-content:center; }
-  svg { width:100%; height:100%; max-height:100vh; display:block; }
+  svg { width:100%; height:100%; max-height:100vh; display:block; touch-action:none; }
 
   .legend { cursor:pointer; }
   .legend rect.hit { fill:transparent; }
@@ -49,32 +48,37 @@
   .spoke { stroke:var(--grid); stroke-width:1.5; }
   .spoke.main { stroke:var(--b); opacity:.45; }
 
-  .prev { fill:var(--g); fill-opacity:.12; stroke:var(--g); stroke-width:3; stroke-dasharray:8 6;
-          opacity:0; animation:fade .6s .1s forwards; transition:all .3s; }
-  .nowg { transform-box:view-box; transform-origin:500px 480px; transform:scale(0);
-          animation:grow 1.3s .45s cubic-bezier(.16,1,.3,1) forwards; }
+  .prev { fill:var(--g); fill-opacity:.12; stroke:var(--g); stroke-width:3; stroke-dasharray:8 6; transition:all .3s; }
   .now { fill:var(--b); fill-opacity:.26; stroke:var(--b); stroke-width:5; stroke-linejoin:round; transition:all .3s; }
+  .nowg { transform-box:view-box; transform-origin:500px 480px; }
+  .anim .prev { opacity:0; animation:fade .6s .1s forwards; }
+  .anim .nowg { transform:scale(0); animation:grow 1.3s .45s cubic-bezier(.16,1,.3,1) forwards; }
+  .anim .up, .anim .totals { opacity:0; animation:fade .3s 1.8s forwards; }
+  .anim .badge { opacity:0; animation:fade .4s 2.1s forwards; }
   @keyframes grow { to { transform:scale(1); } }
   @keyframes fade { to { opacity:1; } }
 
-  .lab { font-family:"Noto Sans KR"; }
-  .lab.main { font-size:40px; font-weight:800; fill:var(--b); }
-  .lab.sub { font-size:28px; font-weight:500; fill:var(--g); }
-  .up { font:500 22px "DM Mono"; fill:var(--y); opacity:0; animation:fade .3s 1.8s forwards; }
-  .lv { font:500 22px "DM Mono"; opacity:0; transition:opacity .25s; pointer-events:none; }
-  .lv.p { fill:var(--g); } .lv.n { fill:var(--b); }
-
-  .badge { opacity:0; animation:fade .4s 2.1s forwards; }
+  .lab.main { font:800 40px "Noto Sans KR"; fill:var(--b); }
+  .lab.sub { font:500 28px "Noto Sans KR"; fill:var(--g); }
+  .up { font:500 22px "DM Mono"; fill:var(--y); }
   .badge rect { fill:var(--y); }
   .badge text { font:800 26px "Noto Sans KR"; fill:var(--n); }
+
+  /* 가운데 종합 레벨 */
+  .total { pointer-events:none; }
+  .total .k { font:500 20px "DM Mono"; letter-spacing:3px; }
+  .total .v { font:500 54px "DM Mono"; letter-spacing:-2px; }
+  .total .bgc { fill:var(--bg); opacity:.82; }
+  .tn .k, .tn .v { fill:var(--b); }
+  .tp .k, .tp .v { fill:var(--g); }
+  .tp { opacity:0; transition:opacity .25s; } .tn { transition:opacity .25s; }
 
   /* 선택 상태 */
   .sel-prev .prev { fill-opacity:.32; stroke-dasharray:none; stroke-width:4; }
   .sel-prev .now { fill-opacity:.06; stroke-opacity:.25; }
-  .sel-prev .lv.p { opacity:1; }
+  .sel-prev .tp { opacity:1; } .sel-prev .tn { opacity:0; }
   .sel-now .prev { opacity:.25 !important; }
   .sel-now .now { fill-opacity:.38; }
-  .sel-now .lv.n { opacity:1; }
 
   .bubble { box-sizing:border-box; width:100%; padding:16px 24px; border-radius:14px; font-size:29px; line-height:1.5;
     font-weight:500; opacity:0; transform:translateY(12px); transition:opacity .3s ease, transform .3s ease; }
@@ -85,6 +89,28 @@
   .bubble.n { background:var(--b); color:#fff; }
   .bubble b { display:block; font:500 20px "DM Mono"; letter-spacing:1px; margin-bottom:4px; opacity:.85; }
   .bubble.n b { color:#FFE3A3; }
+
+  /* 수정 화면 (e=1) */
+  .edit body, body.edit { overflow:auto; }
+  body.edit .wrap { height:auto; }
+  body.edit svg { height:auto; max-height:none; max-width:720px; margin:0 auto; }
+  .handle { fill:#fff; stroke:var(--b); stroke-width:4; cursor:grab; }
+  .handle.p { stroke:var(--g); }
+  .handle:active { cursor:grabbing; }
+  .panel { max-width:720px; margin:0 auto; padding:8px 20px 40px; box-sizing:border-box; display:flex; flex-direction:column; gap:16px; }
+  .panel h2 { margin:8px 0 0; font-size:20px; color:var(--b); }
+  .seg { display:flex; gap:8px; flex-wrap:wrap; }
+  .seg button, .btn { font:500 15px "Noto Sans KR"; padding:10px 16px; min-height:44px; border-radius:8px; border:2px solid var(--b);
+    background:transparent; color:var(--b); cursor:pointer; }
+  .seg button.on, .btn.primary { background:var(--b); color:#fff; }
+  table { border-collapse:collapse; width:100%; font-size:15px; }
+  th, td { padding:6px 8px; border-bottom:1px solid var(--grid); text-align:left; }
+  td input { width:64px; font:500 16px "DM Mono"; padding:6px; border-radius:6px; border:1px solid var(--grid); background:var(--cb); color:var(--ink); }
+  label { display:flex; flex-direction:column; gap:6px; font-size:14px; color:var(--g); }
+  textarea, input[type=text] { font:500 15px "Noto Sans KR"; padding:10px; border-radius:8px; border:1px solid var(--grid);
+    background:var(--cb); color:var(--ink); resize:vertical; }
+  .out { font:400 13px "DM Mono"; min-height:90px; }
+  .note { font-size:13px; color:var(--g); margin:0; }
 </style>
 </head>
 <body>
@@ -96,93 +122,110 @@
   var q = new URLSearchParams(location.search);
   if (q.get('th') === 'dark') document.documentElement.classList.add('dark');
   if (q.get('th') === 'light') document.documentElement.classList.add('light');
+  var EDIT = q.get('e') === '1';
   var NAMES = ['비율','입체감','선화','채색','얼굴·눈','앵글·동세','배경·디자인','콘셉트'];
   var MAIN = [1,1,1,1,0,0,0,0];
   function nums(s, d) { var a = (s || d).split(',').map(function (x) { return Math.max(0, Math.min(5, parseInt(x, 10) || 0)); });
     while (a.length < 8) a.push(0); return a.slice(0, 8); }
-  var now = nums(q.get('now'), '4,3,4,2,4,3,3,4');
-  var prev = nums(q.get('prev'), '3,3,3,2,4,2,2,4');
-  var month = q.get('d') || '';
-  var pc = q.get('pc') || '지난 능력치 코멘트 자리예요.';
-  var nc = q.get('nc') || '지금 능력치 코멘트 자리예요.';
+  var st = {
+    now: nums(q.get('now'), '4,3,4,2,4,3,3,4'),
+    prev: nums(q.get('prev'), '3,3,3,2,4,2,2,4'),
+    d: q.get('d') || '',
+    pc: q.get('pc') || '지난 능력치 코멘트 자리예요.',
+    nc: q.get('nc') || '지금 능력치 코멘트 자리예요.',
+    target: 'now'
+  };
 
-  // 축 배치: 주 능력치는 위·오른쪽·아래·왼쪽, 부가 능력치는 대각선
-  var ORDER = [0,4,1,5,2,6,3,7];
+  var ORDER = [0,4,1,5,2,6,3,7];          // 주 능력치는 위·오른쪽·아래·왼쪽, 부가는 대각선
   var cx = 500, cy = 480, R = 270, MAX = 5, N = 8;
-  var NS = 'http://www.w3.org/2000/svg', s = document.getElementById('s');
+  var NS = 'http://www.w3.org/2000/svg', s = document.getElementById('s'), wrap = document.getElementById('wrap');
   function el(tag, attrs, parent, text) { var e = document.createElementNS(NS, tag);
     for (var k in attrs) e.setAttribute(k, attrs[k]); if (text != null) e.textContent = text; (parent || s).appendChild(e); return e; }
   function ang(i) { return -Math.PI / 2 + i * 2 * Math.PI / N; }
   function pt(i, v) { return [cx + R * v / MAX * Math.cos(ang(i)), cy + R * v / MAX * Math.sin(ang(i))]; }
   function poly(vals) { return ORDER.map(function (k, i) { return pt(i, vals[k]).map(function (n) { return n.toFixed(1); }).join(' '); }).join(' '); }
+  function avg(a) { return (a.reduce(function (x, y) { return x + y; }, 0) / a.length).toFixed(1); }
 
-  // 범례 (누르는 버튼)
-  function legend(x, label, cls, dashed) {
-    var g = el('g', { class: 'legend ' + cls, tabindex: '0', role: 'button', 'aria-label': label + ' 보기' });
-    el('rect', { class: 'hit', x: x - 10, y: 24, width: 220, height: 56 }, g);
-    if (dashed) el('rect', { class: 'chip', x: x, y: 40, width: 22, height: 22, fill: 'none', stroke: 'var(--g)', 'stroke-width': 3, 'stroke-dasharray': '5 4' }, g);
-    else el('rect', { class: 'chip', x: x, y: 40, width: 22, height: 22, fill: 'var(--b)' }, g);
-    el('text', { x: x + 34, y: 61 }, g, label);
-    return g;
-  }
-  var lp = legend(40, '지난 능력치', 'prevbtn', true);
-  var ln = legend(250, '지금 능력치', 'nowbtn', false);
-  el('text', { class: 'hint', x: 960, y: 61, 'text-anchor': 'end' }, s, '[ SKILL MAP ' + month + ' ]');
+  var bubble, timer, lp, ln;
+  function render(animate) {
+    while (s.firstChild) s.removeChild(s.firstChild);
+    s.setAttribute('class', animate ? 'anim' : '');
 
-  // 격자
-  for (var k = 1; k <= MAX; k++) {
-    el('polygon', { class: 'gridline' + (k === MAX ? ' out' : ''),
-      points: ORDER.map(function (_, i) { return pt(i, k).map(function (n) { return n.toFixed(1); }).join(' '); }).join(' ') });
-  }
-  ORDER.forEach(function (key, i) { var p = pt(i, MAX);
-    el('line', { class: 'spoke' + (MAIN[key] ? ' main' : ''), x1: cx, y1: cy, x2: p[0].toFixed(1), y2: p[1].toFixed(1) }); });
-
-  // 그래프
-  el('polygon', { class: 'prev', points: poly(prev) });
-  var g = el('g', { class: 'nowg' });
-  el('polygon', { class: 'now', points: poly(now) }, g);
-
-  // 레벨 숫자 (선택했을 때만 보임)
-  ORDER.forEach(function (key, i) {
-    [['p', prev], ['n', now]].forEach(function (pair) {
-      var v = pair[1][key], a = ang(i), r = R * v / MAX + 26;
-      el('text', { class: 'lv ' + pair[0], x: (cx + r * Math.cos(a)).toFixed(1), y: (cy + r * Math.sin(a) + 8).toFixed(1), 'text-anchor': 'middle' }, s, 'Lv.' + v);
-    });
-  });
-
-  // 축 이름 + 오른 항목 표시
-  var ups = 0;
-  ORDER.forEach(function (key, i) {
-    var a = ang(i), c = Math.cos(a), lx = cx + (R + 64) * c, ly = cy + (R + 64) * Math.sin(a);
-    var anchor = Math.abs(c) < .3 ? 'middle' : (c > 0 ? 'start' : 'end');
-    if (anchor === 'start') lx -= 22; if (anchor === 'end') lx += 22;
-    var main = MAIN[key], size = main ? 40 : 28;
-    var t = el('text', { class: 'lab ' + (main ? 'main' : 'sub'), x: lx.toFixed(1), y: (ly + size * .35).toFixed(1), 'text-anchor': anchor }, s, NAMES[key]);
-    var d = now[key] - prev[key];
-    if (d > 0) {
-      ups++;
-      var w = t.getComputedTextLength ? t.getComputedTextLength() : size * NAMES[key].length;
-      var ux = anchor === 'middle' ? lx + w / 2 + 8 : (anchor === 'end' ? lx + 8 : lx + w + 8);
-      el('text', { class: 'up', x: ux.toFixed(1), y: (ly + 4).toFixed(1) }, s, '▲+' + d);
+    function legend(x, label, cls, dashed) {
+      var g = el('g', { class: 'legend ' + cls, tabindex: '0', role: 'button', 'aria-label': label + ' 보기' });
+      el('rect', { class: 'hit', x: x - 10, y: 24, width: 220, height: 56 }, g);
+      if (dashed) el('rect', { class: 'chip', x: x, y: 40, width: 22, height: 22, fill: 'none', stroke: 'var(--g)', 'stroke-width': 3, 'stroke-dasharray': '5 4' }, g);
+      else el('rect', { class: 'chip', x: x, y: 40, width: 22, height: 22, fill: 'var(--b)' }, g);
+      el('text', { x: x + 34, y: 61 }, g, label);
+      return g;
     }
-  });
+    lp = legend(40, '지난 능력치', 'prevbtn', true);
+    ln = legend(250, '지금 능력치', 'nowbtn', false);
+    el('text', { class: 'hint', x: 960, y: 61, 'text-anchor': 'end' }, s, '[ SKILL MAP ' + st.d + ' ]');
 
-  // 배지
-  if (ups > 0) {
-    var bg = el('g', { class: 'badge' });
-    var msg = '여기까지 올라왔어요!  ▲' + ups;
-    el('rect', { x: 600, y: 96, width: 360, height: 52 }, bg);
-    el('text', { x: 780, y: 131, 'text-anchor': 'middle' }, bg, msg);
+    for (var k = 1; k <= MAX; k++)
+      el('polygon', { class: 'gridline' + (k === MAX ? ' out' : ''),
+        points: ORDER.map(function (_, i) { return pt(i, k).map(function (n) { return n.toFixed(1); }).join(' '); }).join(' ') });
+    ORDER.forEach(function (key, i) { var p = pt(i, MAX);
+      el('line', { class: 'spoke' + (MAIN[key] ? ' main' : ''), x1: cx, y1: cy, x2: p[0].toFixed(1), y2: p[1].toFixed(1) }); });
+
+    el('polygon', { class: 'prev', points: poly(st.prev) });
+    var g = el('g', { class: 'nowg' });
+    el('polygon', { class: 'now', points: poly(st.now) }, g);
+
+    // 가운데 종합 레벨
+    var tw = el('g', { class: 'totals' });
+    [['tn', st.now], ['tp', st.prev]].forEach(function (p) {
+      var t = el('g', { class: 'total ' + p[0] }, tw);
+      el('rect', { class: 'bgc', x: cx - 115, y: cy - 58, width: 230, height: 108, rx: 12 }, t);
+      el('text', { class: 'k', x: cx, y: cy - 26, 'text-anchor': 'middle' }, t, p[0] === 'tn' ? '종합 TOTAL' : '지난 TOTAL');
+      el('text', { class: 'v', x: cx, y: cy + 36, 'text-anchor': 'middle' }, t, 'Lv.' + avg(p[1]));
+    });
+
+    var ups = 0;
+    ORDER.forEach(function (key, i) {
+      var a = ang(i), c = Math.cos(a), lx = cx + (R + 64) * c, ly = cy + (R + 64) * Math.sin(a);
+      var anchor = Math.abs(c) < .3 ? 'middle' : (c > 0 ? 'start' : 'end');
+      if (anchor === 'start') lx -= 22; if (anchor === 'end') lx += 22;
+      var main = MAIN[key], size = main ? 40 : 28;
+      var t = el('text', { class: 'lab ' + (main ? 'main' : 'sub'), x: lx.toFixed(1), y: (ly + size * .35).toFixed(1), 'text-anchor': anchor }, s, NAMES[key]);
+      var d = st.now[key] - st.prev[key];
+      if (d > 0) {
+        ups++;
+        var w = t.getComputedTextLength ? t.getComputedTextLength() : size * NAMES[key].length;
+        var ux = anchor === 'middle' ? lx + w / 2 + 8 : (anchor === 'end' ? lx + 8 : lx + w + 8);
+        el('text', { class: 'up', x: ux.toFixed(1), y: (ly + 4).toFixed(1) }, s, '▲+' + d);
+      }
+    });
+
+    if (ups > 0) {
+      var bg = el('g', { class: 'badge' });
+      el('rect', { x: 600, y: 96, width: 360, height: 52 }, bg);
+      el('text', { x: 780, y: 131, 'text-anchor': 'middle' }, bg, '여기까지 올라왔어요!  ▲' + ups);
+    }
+
+    el('text', { class: 'tip', x: 500, y: 930, 'text-anchor': 'middle' }, s,
+      EDIT ? '꼭짓점을 끌어서 레벨을 바꿀 수 있어요' : '▲ 위의 "지난 능력치" · "지금 능력치"를 눌러 보세요');
+    var fo = el('foreignObject', { x: 40, y: 852, width: 920, height: 150 });
+    bubble = document.createElement('div'); bubble.className = 'bubble'; bubble.setAttribute('role', 'status'); bubble.setAttribute('aria-live', 'polite');
+    fo.appendChild(bubble);
+
+    [[lp, 'p'], [ln, 'n']].forEach(function (pair) {
+      pair[0].addEventListener('click', function () { pick(pair[1]); });
+      pair[0].addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick(pair[1]); } });
+    });
+
+    if (EDIT) {
+      var vals = st[st.target];
+      ORDER.forEach(function (key, i) {
+        var p = pt(i, vals[key]);
+        var h = el('circle', { class: 'handle' + (st.target === 'prev' ? ' p' : ''), cx: p[0].toFixed(1), cy: p[1].toFixed(1), r: 16,
+          'aria-label': NAMES[key] + ' 레벨 끌기' });
+        h.addEventListener('pointerdown', function (e) { e.preventDefault(); drag = { key: key, i: i }; });
+      });
+    }
   }
 
-  // 안내 문구 + 코멘트 자리 (그래프 아래)
-  el('text', { class: 'tip', x: 500, y: 930, 'text-anchor': 'middle' }, s, '▲ 위의 "지난 능력치" · "지금 능력치"를 눌러 보세요');
-  var fo = el('foreignObject', { x: 40, y: 852, width: 920, height: 150 });
-  var bubble = document.createElement('div'); bubble.className = 'bubble'; bubble.setAttribute('role', 'status'); bubble.setAttribute('aria-live', 'polite');
-  fo.appendChild(bubble);
-
-  // 누르면: 강조 + 코멘트가 떴다가 사라짐
-  var wrap = document.getElementById('wrap'), timer;
   function pick(which) {
     clearTimeout(timer);
     wrap.classList.remove('sel-prev', 'sel-now');
@@ -190,17 +233,88 @@
     bubble.className = 'bubble ' + which;
     bubble.innerHTML = '';
     var b = document.createElement('b'); b.textContent = which === 'p' ? 'LAST · 지난 능력치' : 'NOW · 이번에 좋아진 점';
-    bubble.appendChild(b); bubble.appendChild(document.createTextNode(which === 'p' ? pc : nc));
+    bubble.appendChild(b); bubble.appendChild(document.createTextNode(which === 'p' ? st.pc : st.nc));
     requestAnimationFrame(function () { bubble.classList.add('show'); });
     timer = setTimeout(function () {
       bubble.classList.remove('show');
       setTimeout(function () { wrap.classList.remove('sel-prev', 'sel-now'); }, 300);
     }, 4500);
   }
-  [[lp, 'p'], [ln, 'n']].forEach(function (pair) {
-    pair[0].addEventListener('click', function () { pick(pair[1]); });
-    pair[0].addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick(pair[1]); } });
-  });
+
+  // ── 수정 화면
+  var drag = null;
+  function svgPoint(e) { var m = s.getScreenCTM().inverse(); var p = s.createSVGPoint(); p.x = e.clientX; p.y = e.clientY; return p.matrixTransform(m); }
+  if (EDIT) {
+    document.body.classList.add('edit');
+    document.documentElement.style.height = 'auto'; document.documentElement.style.overflow = 'auto';
+    document.body.style.height = 'auto';
+    s.addEventListener('pointermove', function (e) {
+      if (!drag) return;
+      var p = svgPoint(e), a = ang(drag.i);
+      var proj = (p.x - cx) * Math.cos(a) + (p.y - cy) * Math.sin(a);
+      var v = Math.max(0, Math.min(MAX, Math.round(proj / R * MAX)));
+      if (st[st.target][drag.key] !== v) { st[st.target][drag.key] = v; render(false); syncPanel(); }
+    });
+    window.addEventListener('pointerup', function () { drag = null; });
+
+    var panel = document.createElement('div'); panel.className = 'panel';
+    panel.innerHTML =
+      '<h2>능력치 수정 (선생님용)</h2>' +
+      '<p class="note">여기서 바꾼 내용은 이 화면에만 보여요. 다 고친 뒤 아래 "새 주소 복사"를 눌러 노션 위젯 주소를 바꿔 주세요.</p>' +
+      '<div class="seg"><button type="button" data-t="now" class="on">지금 능력치 끌어서 수정</button><button type="button" data-t="prev">지난 능력치 끌어서 수정</button></div>' +
+      '<table><thead><tr><th>항목</th><th>지난</th><th>지금</th></tr></thead><tbody id="rows"></tbody></table>' +
+      '<label>기준 월<input type="text" id="d"></label>' +
+      '<label>지난 능력치 코멘트<textarea id="pc" rows="2"></textarea></label>' +
+      '<label>지금 능력치 코멘트 (좋아진 점)<textarea id="nc" rows="2"></textarea></label>' +
+      '<label>새 위젯 주소<textarea id="out" class="out" readonly></textarea></label>' +
+      '<div class="seg"><button type="button" class="btn primary" id="copy">새 주소 복사</button><button type="button" class="btn" id="play">미리보기 다시 재생</button></div>';
+    document.body.appendChild(panel);
+    var rows = panel.querySelector('#rows');
+    NAMES.forEach(function (nm, k) {
+      var tr = document.createElement('tr');
+      tr.innerHTML = '<td>' + nm + (MAIN[k] ? ' <b style="color:var(--b)">주</b>' : '') + '</td>' +
+        '<td><input type="number" min="0" max="5" data-s="prev" data-k="' + k + '" aria-label="' + nm + ' 지난 레벨"></td>' +
+        '<td><input type="number" min="0" max="5" data-s="now" data-k="' + k + '" aria-label="' + nm + ' 지금 레벨"></td>';
+      rows.appendChild(tr);
+    });
+    panel.addEventListener('input', function (e) {
+      var t = e.target;
+      if (t.dataset.s) { st[t.dataset.s][+t.dataset.k] = Math.max(0, Math.min(5, parseInt(t.value, 10) || 0)); render(false); }
+      if (t.id === 'd' || t.id === 'pc' || t.id === 'nc') { st[t.id] = t.value; if (t.id === 'd') render(false); }
+      writeOut();
+    });
+    panel.querySelectorAll('[data-t]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        st.target = b.dataset.t;
+        panel.querySelectorAll('[data-t]').forEach(function (x) { x.classList.toggle('on', x === b); });
+        render(false);
+      });
+    });
+    panel.querySelector('#play').addEventListener('click', function () { render(true); });
+    panel.querySelector('#copy').addEventListener('click', function () {
+      var out = panel.querySelector('#out'), btn = this;
+      function done() { btn.textContent = '복사했어요!'; setTimeout(function () { btn.textContent = '새 주소 복사'; }, 1600); }
+      if (navigator.clipboard) navigator.clipboard.writeText(out.value).then(done, function () { out.select(); document.execCommand('copy'); done(); });
+      else { out.select(); document.execCommand('copy'); done(); }
+    });
+  }
+  function syncPanel() {
+    if (!EDIT) return;
+    document.querySelectorAll('[data-s]').forEach(function (i) { i.value = st[i.dataset.s][+i.dataset.k]; });
+    document.getElementById('d').value = st.d; document.getElementById('pc').value = st.pc; document.getElementById('nc').value = st.nc;
+    writeOut();
+  }
+  function writeOut() {
+    if (!EDIT) return;
+    var u = new URL(location.href.split('?')[0]);
+    u.searchParams.set('d', st.d); u.searchParams.set('now', st.now.join(',')); u.searchParams.set('prev', st.prev.join(','));
+    u.searchParams.set('pc', st.pc); u.searchParams.set('nc', st.nc);
+    if (q.get('th')) u.searchParams.set('th', q.get('th'));
+    document.getElementById('out').value = u.toString();
+  }
+
+  render(!EDIT);
+  syncPanel();
 })();
 </script>
 </body>
