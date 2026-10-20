@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
+<meta name="color-scheme" content="light dark">
 <title>YUNA 카드</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@700;900&display=swap" rel="stylesheet">
@@ -16,10 +17,11 @@
     윤아 자료실 링크는 고정. 날짜는 표시하지 않음.
   */
   :root {
+    color-scheme: light dark;   /* 노션 라이트/다크 어느 쪽이든 흰 바탕 없이 투명하게 */
     --g1: #3A45D6; --g2: #4A63E0; --g3: #5A8FE6; --g4: #5EA9EA;
     --accent: #4FC6E9;
   }
-  html, body { margin: 0; background: transparent; }
+  html, body { margin: 0; background: transparent !important; }
   body {
     font-family: "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
     -webkit-font-smoothing: antialiased;
