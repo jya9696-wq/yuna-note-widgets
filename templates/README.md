@@ -13,5 +13,5 @@
 - `../cards.html?nu=최근노트ID&cu=수업정리ID` — 07 바로가기 · QUICK LINKS (B안 띠). 노션 블록 높이 약 90px (휴대폰 약 70px).
 
 ## section_heading — 필기노트 섹션 제목 이미지 (01 핵심 피드백 / 02 앞으로 신경 쓸 부분 / 03 이번 그림에서 고칠 부분)
-- 틀: `section_heading.html` ({{NUM}} {{EB}} {{TT}}), 만들기: `python3 render_section_headings.py` → 2832×224 PNG (4배)
+- 틀: `section_heading.html` ({{NUM}} {{EB}} {{TT}}), 만들기: `python3 render_section_headings.py` → 1880×224 PNG (4배, 가로 470px 기준이라 노션에서 약 1.5배 크게 보임). 04 LIBRARY 같이 보면 좋은 자료 포함
 - 선생님 원본 디자인(1416×112)을 같은 모양으로 다시 그려 해상도를 올린 것. 모든 학생 같은 이미지 → 필기노트 템플릿에 넣어 복제로 사용.
