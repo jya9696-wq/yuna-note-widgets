@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<meta name="color-scheme" content="light dark">
+<title>YUNA 노트 카드</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Noto+Sans+KR:wght@400;800&display=swap" rel="stylesheet">
+<style>
+  /*
+    필기노트 맨 위 카드 3칸 위젯 · 학생 페이지 카드(yuna-cards)와 같은 B+C 상호작용
+    (마우스를 올리면: 카드가 뜨고 → 파랑으로 바뀜 / 카드 전체가 링크)
+
+    노션 임베드 주소:
+      yuna-note-cards.html?v=영상ID&a=0:02:14~0:42:24&b=다음과제&bt=3:45:58&p=지난노트ID&pd=10/10
+        v  : 유튜브 영상 ID (youtu.be/ 뒤 11자리)
+        a  : 1번 '내 피드백 구간' — 시작~끝. 누르면 시작 시간부터 영상이 열림
+        b  : 2번 '다음 과제' 한 줄 (10자 이내)
+        bt : 2번을 눌렀을 때 열릴 영상 시간 (생략하면 링크 없음)
+        p  : 3번 '지난 피드백' — 지난 노트 노션 페이지 ID (32자리)
+        pd : 지난 노트 날짜 (예: 10/10) → "10/10 노트 보기 →"
+        m  : light | dark  (생략하면 기기 설정을 따름)
+    영상은 새 탭, 지난 노트는 같은 탭에서 열림. 권장 높이 약 230px
+  */
+  :root {
+    --bg: #FFFFFF; --cb: #F1F1EF; --g: #7C828C; --line: #C9CBCF;
+    --b: #1F92F9; --y: #F5B82E; --n: #0B1F66;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not(.light) { --bg: #191919; --cb: #2F2F2F; --g: #9A9FA8; --line: #4A4D52; }
+  }
+  :root.dark { --bg: #191919; --cb: #2F2F2F; --g: #9A9FA8; --line: #4A4D52; }
+
+  html, body { margin: 0; height: 100%; background: var(--bg); overflow: hidden;
+    -webkit-font-smoothing: antialiased; }
+  .row { box-sizing: border-box; height: 100%; padding: 18px 12px 12px;
+    display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(10px, 3vw, 28px); align-content: center; }
+
+  .card { position: relative; display: flex; flex-direction: column; min-width: 0;
+    box-sizing: border-box; text-decoration: none; color: inherit; cursor: pointer;
+    background: var(--cb); border-radius: 10px; aspect-ratio: 1.2 / 1; max-height: calc(100vh - 30px);
+    padding: clamp(10px, 2.2vw, 22px) clamp(10px, 2.4vw, 26px);
+    transition: transform .25s ease, box-shadow .25s ease, background .25s ease; outline: none;
+    -webkit-tap-highlight-color: transparent; }
+  .top { display: flex; justify-content: space-between; align-items: center; }
+  .tag { font: 400 clamp(9px, 1.25vw, 13px) "DM Mono", monospace; color: var(--g); letter-spacing: 1px; transition: color .25s; }
+  .chk { width: clamp(11px, 1.5vw, 16px); height: clamp(11px, 1.5vw, 16px); box-sizing: border-box;
+    border: 2px solid var(--b); display: flex; align-items: center; justify-content: center; transition: all .25s; }
+  .chk svg { width: 75%; height: 75%; opacity: 0; transition: opacity .2s; }
+  .t { font: 800 clamp(10px, 2vw, 21px) "Noto Sans KR", sans-serif; color: var(--b);
+    margin-top: clamp(3px, .6vw, 6px); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: color .25s; }
+  .rule { height: 2px; background: var(--line); margin-top: clamp(4px, .8vw, 8px); transition: background .25s; }
+  .blks { display: flex; gap: 3px; justify-content: flex-end; margin-top: 5px; }
+  .blk { width: clamp(7px, 1.2vw, 13px); height: clamp(3px, .45vw, 5px); background: var(--g); transition: background .25s; }
+  .blk.b { background: var(--b); }
+  .num { font: 500 clamp(26px, 5.6vw, 58px)/1 "DM Mono", monospace; color: var(--b); letter-spacing: -.06em;
+    margin-top: auto; font-feature-settings: "zero" 1; transition: color .25s; }
+  .sub { font: 400 clamp(9px, 1.9vw, 19px)/1.25 "Noto Sans KR", sans-serif; color: var(--g);
+    margin-top: clamp(8px, 1.6vw, 16px); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1px; transition: color .25s; }
+  .bar { width: 26%; max-width: 44px; height: clamp(3px, .4vw, 4px); background: var(--b); margin-top: 5px;
+    transition: width .35s ease, max-width .35s ease, background .25s; }
+
+  /* B 들어올림 + C 파랑 반전 (꺾쇠는 뺌) */
+  .card:hover, .card:focus-visible, .card.press {
+    transform: translateY(-6px); background: var(--b); box-shadow: 0 14px 28px rgba(0,0,0,.18); }
+  .card:hover .t, .card:hover .num, .card:focus-visible .t, .card:focus-visible .num,
+  .card.press .t, .card.press .num { color: #fff; }
+  .card:hover .sub, .card:focus-visible .sub, .card.press .sub { color: #fff; }
+  .card:hover .tag, .card:focus-visible .tag, .card.press .tag { color: #D6EBFF; }
+  .card:hover .rule, .card:focus-visible .rule, .card.press .rule { background: rgba(255,255,255,.5); }
+  .card:hover .chk, .card:focus-visible .chk, .card.press .chk { background: var(--y); border-color: var(--y); }
+  .card:hover .chk svg, .card:focus-visible .chk svg, .card.press .chk svg { opacity: 1; }
+  .card:hover .blk, .card:focus-visible .blk, .card.press .blk { background: #fff; }
+  .card:hover .bar, .card:focus-visible .bar, .card.press .bar { width: 100%; max-width: 100%; background: var(--y); }
+  @media (hover: none) { .card:hover { transform: none; background: var(--cb); box-shadow: none; } }
+</style>
+</head>
+<body>
+<div class="row">
+  <a class="card" id="c1" href="#" aria-label="내 피드백 구간">
+    <div class="top"><span class="tag">[ #01 ]</span><span class="chk"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 8.5l3.5 3.5 7.5-8" fill="none" stroke="#0B1F66" stroke-width="2.6"/></svg></span></div>
+    <div class="t">내 피드백 구간</div><div class="rule"></div>
+    <div class="blks"><span class="blk b"></span><span class="blk b"></span><span class="blk"></span><span class="blk"></span></div>
+    <div class="num">01</div><div class="bar"></div>
+    <div class="sub" id="s1"></div>
+  </a>
+  <a class="card" id="c2" href="#" aria-label="다음 과제">
+    <div class="top"><span class="tag">[ #02 ]</span><span class="chk"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 8.5l3.5 3.5 7.5-8" fill="none" stroke="#0B1F66" stroke-width="2.6"/></svg></span></div>
+    <div class="t">다음 과제</div><div class="rule"></div>
+    <div class="blks"><span class="blk b"></span><span class="blk b"></span><span class="blk"></span><span class="blk"></span></div>
+    <div class="num">02</div><div class="bar"></div>
+    <div class="sub" id="s2"></div>
+  </a>
+  <a class="card" id="c3" href="#" aria-label="지난 피드백">
+    <div class="top"><span class="tag">[ #03 ]</span><span class="chk"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 8.5l3.5 3.5 7.5-8" fill="none" stroke="#0B1F66" stroke-width="2.6"/></svg></span></div>
+    <div class="t">지난 피드백</div><div class="rule"></div>
+    <div class="blks"><span class="blk b"></span><span class="blk b"></span><span class="blk"></span><span class="blk"></span></div>
+    <div class="num">03</div><div class="bar"></div>
+    <div class="sub" id="s3"></div>
+  </a>
+</div>
+<script>
+(function () {
+  var q = new URLSearchParams(location.search);
+  if (q.get('m') === 'dark') document.documentElement.classList.add('dark');
+  if (q.get('m') === 'light') document.documentElement.classList.add('light');
+  var id32 = function (v) { return /^[0-9a-fA-F]{32}$/.test(v || ''); };
+  var vid = q.get('v') || '', okV = /^[\w-]{11}$/.test(vid);
+  // "1:02:03" / "2:14" / "134" → 초
+  var sec = function (v) {
+    v = (v || '').trim(); if (!v) return null;
+    if (/^\d+$/.test(v)) return +v;
+    var p = v.split(':').map(Number); if (p.some(isNaN)) return null;
+    return p.reduce(function (a, x) { return a * 60 + x; }, 0);
+  };
+  var yt = function (t) { return okV && t != null ? 'https://youtu.be/' + vid + '?t=' + t : null; };
+  var a = (q.get('a') || '').replace(/\s*~\s*/, ' ~ ');
+  var cards = [
+    { k: 1, text: a, url: yt(sec(a.split('~')[0])), top: false },
+    { k: 2, text: q.get('b') || '', url: yt(sec(q.get('bt'))), top: false },
+    { k: 3, text: q.get('pd') ? q.get('pd') + ' 노트 보기 →' : (id32(q.get('p')) ? '지난 노트 보기 →' : ''),
+      url: id32(q.get('p')) ? 'https://www.notion.so/' + q.get('p') : null, top: true }
+  ];
+  cards.forEach(function (c) {
+    var el = document.getElementById('c' + c.k);
+    document.getElementById('s' + c.k).textContent = c.text || '—';
+    if (!c.url) { el.removeAttribute('href'); el.style.cursor = 'default'; if (!c.text) el.style.opacity = '.5'; return; }
+    el.href = c.url; el.rel = 'noopener';
+    el.target = c.top ? '_top' : '_blank';
+    el.addEventListener('click', function (e) {
+      el.classList.add('press');
+      setTimeout(function () { el.classList.remove('press'); }, 600);
+      if (!c.top) return;               // 영상: 새 탭
+      e.preventDefault();               // 지난 노트: 같은 탭
+      try { window.top.location.href = c.url; } catch (err) { window.open(c.url, '_blank', 'noopener'); }
+    });
+    el.addEventListener('touchstart', function () { el.classList.add('press'); }, { passive: true });
+  });
+})();
+</script>
+</body>
+</html>
