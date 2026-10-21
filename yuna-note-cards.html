@@ -132,7 +132,7 @@
     { k: 1, text: a, url: yt(sec(a.split('~')[0])), top: false },
     { k: 2, text: q.get('b') || '', url: yt(sec(q.get('bt'))), top: false },
     { k: 3, text: pd ? pd + ' 노트 보기 →' : (id32(q.get('p')) ? '지난 노트 보기 →' : ''),
-      url: id32(q.get('p')) ? 'https://www.notion.so/' + q.get('p') : null, top: true }
+      url: id32(q.get('p')) ? 'https://respected-homburg-6dd.notion.site/' + q.get('p') : null, top: true }
   ];
   cards.forEach(function (c) {
     var el = document.getElementById('c' + c.k);
